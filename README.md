@@ -1,4 +1,4 @@
-# dsh-anywhere
+# dsh-anywhere-zcode
 
 > 📱 **专为 DSH iOS App 与多端协同打造的超级连接枢纽**  
 > 电脑、iPhone、iPad 多终端同时在线无缝切换，实时同屏收发；局域网 + 通用稳定公网全覆盖，锁屏切回 0.25 秒极速自愈（Fast-Resume）。
@@ -12,7 +12,7 @@
 2. **手机一锁屏就假死**：切出微信回个消息或锁屏几秒钟，再打开界面直接白屏、断线，必须手动刷新重新进；
 3. **输入流不同步**：手机发了消息电脑看不到，或者电脑端正在打印流，手机端一片空白。
 
-**`dsh-anywhere` 深度重构底层传输与事件流，带来前所未有的「多端实时同屏」体验：**
+**`dsh-anywhere-zcode` 深度重构底层传输与事件流，带来前所未有的「多端实时同屏」体验：**
 
 * 🤝 **多终端同时在线，实时双向广播**：
   电脑端（桌面客户端或浏览器）、iPhone (DSH iOS App)、iPad 或多台移动设备可以**同时打开同一个会话**。无论哪一台设备敲下回车发指令，所有设备屏幕**实时同步滚动、同步打印 AI 的流式回复**，真正的“多端一心”。
@@ -78,7 +78,7 @@ DSH 官方前端里使用了 **RegExp 后行断言**（`(?<=…)` / `(?<!…)`�
 **为什么必须选择第二种？核心原因：**
 1. **老玩家设备环境多样**：许多玩家使用巨魔（TrollStore）或自签设备，重装与签名成本很高。强加模态弹窗不仅粗暴，更会直接打断正在进行的紧急工作，产生极高沟通与客诉成本；
 2. **多端版本排列组合复杂**：存在“电脑旧版 + 手机新版”、“电脑新版 + 手机老版”、“新系统设备 + 老系统备用机”等多种交织状态。在代理层做**按需语法降级与向下自愈**，能让所有版本组合均可零门槛秒开；
-3. **老玩家免更直接复活**：由于改写完全发生在 3083 代理层，即使老玩家手机里装的是几个月前的旧版 iOS App（如 1.0.x），连上升级后的 `dsh-anywhere`，也无需重装 App 即可立即消除白屏；
+3. **老玩家免更直接复活**：由于改写完全发生在 3083 代理层，即使老玩家手机里装的是几个月前的旧版 iOS App（如 1.0.x），连上升级后的 `dsh-anywhere-zcode`，也无需重装 App 即可立即消除白屏；
 4. **升级提示润物细无声**：不在操作路径上弹遮罩，仅在设置/关于界面做柔性状态提示，玩家自愿随时一键升级，不打扰正常使用。
 
 ### 6. 手机端抽屉补「设置」入口
@@ -104,58 +104,73 @@ DSH 移动端抽屉里原本没有任何设置项 —— 真正的设置藏在�
 
 ## 📦 安装与配置
 
-### ⚠️ 先看这条：不要用 `npm i dsh-anywhere`
+### ✅ 包名独一无二：`dsh-anywhere-zcode`
 
-**npm 上那个 `dsh-anywhere` 不是这个插件。**
+从 **v1.1.0** 起本插件改名为 **`dsh-anywhere-zcode`**，理由很实在：
 
 ```text
-npm registry  : dsh-anywhere@0.1.2
-maintainer    : tangwenhao
-repository    : github.com/tangwenhao616-netizen/dsh-anywhere
-published     : 2026-08-18
+npm registry : dsh-anywhere@0.1.2  ← 2026-08 已被别人占用（tangwenhao）
+               与本项目同名，但代码、功能毫无关系
 ```
 
-它和本项目 **同名但毫无关系**——这个名字在 2026-08 就被别人占了，
-所以本插件从未也没有在 npm 上发布过。`pnpm add dsh-anywhere` / `npm i dsh-anywhere`
-装到的是**别人的代码**，不是这里的功能（没有 iOS 16.3 白屏自愈、没有抽屉设置齿轮）。
+继续叫 `dsh-anywhere`，别人 `pnpm add dsh-anywhere` 就会装到**别人的代码**——
+没有 iOS 16.3 兼容垫片、没有 ZCode 手机远程页、没有 3083 多端同屏。
+所以本插件改用全新独有包名：**npm 上不存在，也不会再撞名**。
 
-**正确装法只有一种：走 GitHub 源。**
+两个名字分工，别混：
+
+| 用途 | 值 |
+|---|---|
+| 包名（安装 / 更新用） | `dsh-anywhere-zcode` |
+| 插件实例 id、`settings.yaml` 配置键 | `dsh-anywhere`（**故意不变**，升级不会产生第二个实例、不会双绑 3083） |
 
 ### 1. 安装插件
 在你的 DSH Profile 目录（如 `~/.dsh/profiles/desktop`）下执行：
 
 ```bash
 # pnpm
-pnpm add github:liushQAQ/dsh-anywhere
+pnpm add github:liushQAQ/dsh-anywhere-zcode
 
 # 或 npm
-npm i github:liushQAQ/dsh-anywhere
+npm i github:liushQAQ/dsh-anywhere-zcode
 ```
 
 > 走 GitHub 源的好处：
-> - **不需要 npm 账号、不需要发包**，绕开名字被占和注册限制；
+> - **不需要 npm 账号、不需要发包**，绕开注册限制；
 > - **永远拿最新代码**，仓库一提交就生效，不用等发版；
 > - 官方推荐的就是这个地址。
 
-如果你之前误装过 npm 上那个同名包，先清掉再装：
+如果你之前装过旧名（`dsh-anywhere`，含 npm 上别人的同名包），先清掉再装：
 
 ```bash
 pnpm remove dsh-anywhere
-pnpm add github:liushQAQ/dsh-anywhere
+pnpm add github:liushQAQ/dsh-anywhere-zcode
 ```
 
 也可以直接引用本地构建产物（把路径换成你自己的 tgz 位置；Windows 与 macOS / Linux 写法均可）：
 ```bash
-pnpm add /path/to/dsh-anywhere-<version>.tgz
+pnpm add /path/to/dsh-anywhere-zcode-<version>.tgz
 ```
 
 ### 2. 启用插件
-在 `settings.yaml` 中配置启用（键名仍是 `dsh-anywhere`，取自 package.json 的 `name`）：
+在 `settings.yaml` 中配置启用（键名是**实例 id** `dsh-anywhere`，与包名无关，不用跟着改）：
 ```yaml
 plugins:
   dsh-anywhere:
     enabled: true
 ```
+
+### 3. ZCode 手机页网关（已内置，v1.1.0 起）
+
+`zcode-rc/` 整个网关随包发布，装完插件就能一条命令部署，不用另外下载：
+
+```bash
+# 在 profile 目录下执行；--task 会注册开机自启
+npx zcode-rc --target D:\zcode-rc\zcode-rc-gateway --task
+# 或者
+node node_modules/dsh-anywhere-zcode/zcode-rc/install.mjs --target D:\zcode-rc\zcode-rc-gateway --task
+```
+
 
 ---
 
@@ -180,7 +195,7 @@ DSH iOS App 本身就是一个 WKWebView 壳，**不用改一行 App 代码就�
 | 装哪边 | 装什么 | 说明 |
 |---|---|---|
 | 手机 | DSH iOS App（`github.com/liushQAQ/IOS`） | 薄壳 WKWebView，**同一个 App 既连 DSH 也开 ZCode**，两边各开各的地址 |
-| 电脑 | 本插件 dsh-anywhere | 反代 + ES2023 垫片（改写层本体）；`github:` 前缀不能省，npm 上的同名包不是这个 |
+| 电脑 | 本插件 `dsh-anywhere-zcode` | 反代 + ES2023 垫片（改写层本体）+ 内置 zcode-rc 网关；`github:` 前缀不能省 |
 | 电脑 | `zcode-rc-gateway`（随本仓库 `install.mjs` 装） | ZCode 手机页的**唯一入口** `:3090/rc`：`/rc` 破缓存 + `viewport-fit` 安全区 + 免登录注入 |
 | 电脑 | ZCode 桌面端 | 保持**官方原版**，一个字不改；改过就连不上官方中继 |
 
@@ -264,6 +279,16 @@ iOS 16.0–16.2、iOS 15 理论上被同一套垫片覆盖，但没有真机验�
 ---
 
 ## 🗒 更新日志
+
+### v1.1.0
+
+* **改名：`dsh-anywhere` → `dsh-anywhere-zcode`**。npm 上 `dsh-anywhere` 早在 2026-08 被他人占用，
+  同名不同源，`pnpm add dsh-anywhere` 会装到别人的代码。新名 npm 不存在、独有，仓库同步改名
+  `github.com/liushQAQ/dsh-anywhere-zcode`。**插件实例 id 仍为 `dsh-anywhere`**，配置键、
+  数据目录（`$DSH_HOME/dsh-anywhere/`）、已登录设备全部沿用，升级不需要重新扫码。
+* **ZCode 手机页网关内置**：`zcode-rc/`（runner / mobilefix / diag / install）随包发布，
+  装完插件即可 `npx zcode-rc --target <目录> --task` 一条命令部署，不再需要另找安装包。
+* **更新命令跟着改名**：一键更新走 `dsh plugin update dsh-anywhere-zcode --latest -w`。
 
 ### v1.0.23
 
@@ -359,7 +384,7 @@ iOS 16.0–16.2、iOS 15 理论上被同一套垫片覆盖，但没有真机验�
 
 * **发布规范化**：新增 `LICENSE`（MIT）与 `repository` / `homepage` / `bugs` / `author` 元数据；`files` 白名单补 `LICENSE`。
 * **打包瘦身**：清出 5 个历史 `.bak` 备份（`files` 里的目录项会整目录包含，`.bak` 照样进包），包体积 5.01 MB → 1.09 MB，文件数 32 → 27。
-* **文档通用化**：安装示例的绝对路径改成占位 `/path/to/dsh-anywhere-<version>.tgz`；源码注释与构建产物里的内部措辞改为中性表述，`client/client.js` 已重新构建。
+* **文档通用化**：安装示例的绝对路径改成占位 `/path/to/dsh-anywhere-zcode-<version>.tgz`；源码注释与构建产物里的内部措辞改为中性表述，`client/client.js` 已重新构建。
 * 齿轮定位改为**以「账号行右界」与「抽屉右界」中更靠内的那个为基准**（`anchor = min(ar.right, drawerRight)`，再左移 26+8px）。
   起因：App 把抽屉宽度强制压到 252px 后，账号行仍排在 270，旧算法 `ar.right - 30` 让齿轮 right=266 —— 超出抽屉、被 `overflow:hidden` 裁掉右半边。
 * 实测 430×932 / 393×852 / 375×667 三种尺寸，齿轮均完整落在抽屉内（right 230 / 208 / 198，抽屉右界 252 / 230 / 220）。

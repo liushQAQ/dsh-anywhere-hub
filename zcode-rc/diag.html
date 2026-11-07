@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>ZCode 手机自检</title>
+<style>
+  html,body{margin:0;padding:0;background:#0d0d10;color:#e8e8ee;
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+    -webkit-text-size-adjust:100%;}
+  body{padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 18px);}
+  h1{font-size:17px;margin:0 0 2px;font-weight:600}
+  .sub{color:#8a8a99;font-size:12px;margin-bottom:12px}
+  .card{background:#17171c;border:1px solid #26262e;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+  .row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed #232329}
+  .row:last-child{border-bottom:0}
+  .row b{font-weight:400;color:#9a9aa8;flex:0 0 auto}
+  .row span{text-align:right;word-break:break-all;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+  .ok span{color:#4ade80}
+  .bad span{color:#f87171}
+  .warn span{color:#fbbf24}
+  .big{font-size:15px;font-weight:600;margin-bottom:6px}
+  a.btn{display:block;text-align:center;background:#2a6df4;color:#fff;text-decoration:none;
+    border-radius:10px;padding:13px;font-size:15px;font-weight:600;margin-top:4px}
+  a.btn2{background:#242430;color:#c8c8d4;margin-top:8px;font-weight:400;font-size:13px;padding:11px}
+  #verdict{font-size:15px;font-weight:600}
+</style>
+</head>
+<body>
+<h1>ZCode 手机自检</h1>
+<div class="sub">这一页是纯静态 ES5，不依赖主程序。整页都看得见 = 网关通、WebView 正常。</div>
+
+<div class="card"><div id="verdict" class="big">正在检测…</div><div id="rows"></div></div>
+
+<div class="card">
+  <div class="big" id="missTitle">缺失 API</div>
+  <div id="miss" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#9a9aa8">—</div>
+</div>
+
+<div class="card">
+  <div class="big">下一步</div>
+  <div style="color:#9a9aa8;font-size:12px;margin-bottom:10px" id="hint">—</div>
+  <a class="btn" id="go" href="#">打开正式页面</a>
+  <a class="btn btn2" id="go2" href="#">换 :3091 端口再试</a>
+</div>
+
+<script>
+(function () {
+  var rows = document.getElementById('rows');
+  var missBox = document.getElementById('miss');
+  var verdict = document.getElementById('verdict');
+  var hint = document.getElementById('hint');
+  var go = document.getElementById('go');
+  var go2 = document.getElementById('go2');
+
+  function add(k, v, cls) {
+    var d = document.createElement('div');
+    d.className = 'row' + (cls ? ' ' + cls : '');
+    var b = document.createElement('b'); b.appendChild(document.createTextNode(k));
+    var s = document.createElement('span'); s.appendChild(document.createTextNode(String(v)));
+    d.appendChild(b); d.appendChild(s); rows.appendChild(d);
+    return d;
+  }
+  function probe(name, fn) {
+    try { return fn() ? '' : name; } catch (e) { return name; }
+  }
+  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+  /* ---- 环境 ---- */
+  var ua = navigator.userAgent || '';
+  var sw = window.screen ? (screen.width || 0) : 0;
+  var sh = window.screen ? (screen.height || 0) : 0;
+  var dpr = window.devicePixelRatio || 1;
+  var iw = window.innerWidth || 0;
+  var ih = window.innerHeight || 0;
+
+  add('User-Agent', ua, '');
+  add('屏幕', sw + '×' + sh + ' @' + dpr + 'x', '');
+  add('视口', iw + '×' + ih, '');
+  add('在线', navigator.onLine ? '是' : '否（系统报告离线）', navigator.onLine ? 'ok' : 'bad');
+  add('地址', location.href.slice(0, 90), '');
+
+  /* ---- 安全区（真实属性，能读到像素才算数） ---- */
+  var saT = 0, saB = 0;
+  try {
+    var p = document.createElement('div');
+    p.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+    document.body.appendChild(p);
+    var cs = window.getComputedStyle(p);
+    saT = parseFloat(cs.paddingTop) || 0;
+    saB = parseFloat(cs.paddingBottom) || 0;
+    document.body.removeChild(p);
+  } catch (e) { /* 老引擎忽略 */ }
+  add('安全区 env()', saT + ' / ' + saB, (saT || saB) ? 'ok' : 'warn');
+
+  /* ---- 能力探测 ---- */
+  var missing = [];
+  var checks = [
+    ['toSorted', function () { return typeof [].toSorted === 'function'; }],
+    ['toReversed', function () { return typeof [].toReversed === 'function'; }],
+    ['toSpliced', function () { return typeof [].toSpliced === 'function'; }],
+    ['arr.with', function () { return typeof [].with === 'function'; }],
+    ['groupBy', function () { return typeof Object.groupBy === 'function'; }],
+    ['fromAsync', function () { return typeof Array.fromAsync === 'function'; }],
+    ['withResolvers', function () { return typeof Promise.withResolvers === 'function'; }],
+    ['Promise.try', function () { return typeof Promise.try === 'function'; }],
+    ['canParse', function () { return typeof URL.canParse === 'function'; }],
+    ['findLast', function () { return typeof [].findLast === 'function'; }],
+    ['at', function () { return typeof [].at === 'function'; }],
+    ['hasOwn', function () { return typeof Object.hasOwn === 'function'; }],
+    ['structuredClone', function () { return typeof structuredClone === 'function'; }],
+    ['idleCb', function () { return typeof requestIdleCallback === 'function'; }],
+    ['Compression', function () { return typeof CompressionStream === 'function'; }],
+    ['subtle', function () { return !!(window.crypto && crypto.subtle); }],
+    ['Set.union', function () { return typeof Set.prototype.union === 'function'; }],
+    ['isWellFormed', function () { return typeof ''.isWellFormed === 'function'; }],
+    ['AbortSignal.any', function () { return typeof AbortSignal !== 'undefined' && typeof AbortSignal.any === 'function'; }],
+    ['checkVisibility', function () { return typeof Element !== 'undefined' && typeof Element.prototype.checkVisibility === 'function'; }],
+    ['lookbehind', function () { try { new RegExp('(?<=a)b'); return true; } catch (e) { return false; } }],
+    ['staticBlock', function () { try { new Function('class A{static{this.x=1}}'); return true; } catch (e) { return false; } }]
+  ];
+  for (var i = 0; i < checks.length; i++) {
+    var r = probe(checks[i][0], checks[i][1]);
+    if (r) missing.push(r);
+  }
+  missBox.textContent = missing.length ? missing.join(' , ') : '无（全部原生可用）';
+
+  /* ---- 网关可达性（XHR，2.5s 超时） ---- */
+  var t0 = new Date().getTime();
+  var reached = null;
+  var ms = 0;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/zcode-rc-api/__beacon?m=diag-reach&t=' + t0, true);
+  xhr.timeout = 2500;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) return;
+    ms = new Date().getTime() - t0;
+    reached = (xhr.status >= 200 && xhr.status < 400);
+    finish();
+  };
+  xhr.ontimeout = function () { ms = new Date().getTime() - t0; reached = false; finish(); };
+  xhr.onerror = function () { ms = new Date().getTime() - t0; reached = false; finish(); };
+  try { xhr.send(); } catch (e) { reached = false; finish(); }
+
+  var done = false;
+  function finish() {
+    if (done) return; done = true;
+    add('网关往返', reached ? (ms + ' ms') : ('失败（' + ms + ' ms 超时/拒绝）'), reached ? 'ok' : 'bad');
+
+    if (!reached) {
+      verdict.textContent = '✕ 这台手机连不上网关';
+      verdict.className = 'big bad';
+      hint.textContent = '页面本身没问题（你能看到这行字就证明 WebView 正常）。问题在网络：换同一 Wi-Fi、关掉代理/VPN 类 App，或改用下面的 Tailscale 地址。';
+    } else if (missing.length === 0) {
+      verdict.textContent = '✓ 网关通、API 齐全';
+      verdict.className = 'big ok';
+      hint.textContent = '这台机器跑主程序应该没问题。点下面按钮进正式页面。';
+    } else {
+      verdict.textContent = '✓ 网关通，缺 ' + missing.length + ' 个新 API';
+      verdict.className = 'big warn';
+      hint.textContent = '主程序需要这些 API。网关会在正式页面里补垫片，点下面按钮试。若仍卡住，把这一页截图发给老总。';
+    }
+
+    /* 回传一条，老总不用截图我也能看到 */
+    try {
+      var b = new XMLHttpRequest();
+      b.open('GET', '/zcode-rc-api/__beacon?m=' + encodeURIComponent(
+        'diag ok=' + (reached ? 1 : 0) +
+        ' ms=' + ms +
+        ' sw=' + sw + ' sh=' + sh + ' dpr=' + dpr +
+        ' iw=' + iw + ' ih=' + ih +
+        ' sa=' + saT + '/' + saB +
+        ' miss=' + (missing.join(',') || 'none')
+      ), true);
+      b.send();
+    } catch (e) { /* 忽略 */ }
+  }
+
+  /* ---- 两个入口：都带时间戳，天然绕过缓存 ---- */
+  function buildUrl(host) {
+    var q = location.search.replace(/^\?/, '');
+    var params = {};
+    if (q) {
+      var parts = q.split('&');
+      for (var i = 0; i < parts.length; i++) {
+        var kv = parts[i].split('=');
+        if (kv[0]) params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+      }
+    }
+    var out = [];
+    var keys = ['sid', 'mid', 'name', 'app_version'];
+    for (var k = 0; k < keys.length; k++) {
+      if (params[keys[k]]) out.push(keys[k] + '=' + encodeURIComponent(params[keys[k]]));
+    }
+    out.push('_zcrc=' + new Date().getTime());
+    return (host || '') + '/remote/v4?' + out.join('&');
+  }
+  go.href = buildUrl('');
+  /* v26：换源站按钮不再写死某台机器的 Tailscale 地址（别人装到自己电脑上会跳到原作者机器）。
+     改成「同主机、换 :3091」—— 3090 与 3091 是同一份代码，只是 origin 不同，
+     按源站建键的缓存/离线副本会整体失效，正好用来破「一直卡住」。 */
+  var hostNoPort = location.hostname;
+  go2.href = buildUrl('http://' + hostNoPort + ':3091');
+
+  /* v26：没配对（mid 为空）时，直接把原因顶在最上面。
+     新机器第一次直接开 /rc 就是这个状态：页面能开，但中继邀请是一次性的 mid，没有它连不上。 */
+  (function () {
+    var q = location.search.replace(/^\?/, '');
+    var hasMid = /(^|&)mid=[^&]+/.test(q);
+    if (hasMid) return;
+    var box = document.createElement('div');
+    box.className = 'card';
+    box.style.borderColor = '#7a3b3b';
+    box.style.background = '#241a1a';
+    var t = document.createElement('div');
+    t.className = 'big';
+    t.style.color = '#f87171';
+    t.appendChild(document.createTextNode('还没配对（缺 mid）'));
+    var p = document.createElement('div');
+    p.style.cssText = 'color:#d8b4b4;font-size:12px;line-height:1.6';
+    p.appendChild(document.createTextNode(
+      '请先在电脑上打开 ZCode → 远程控制 → 生成二维码，用这台手机扫一次。' +
+      '扫完会自动记住配对，之后固定用 /rc 打开即可，不用再扫。'
+    ));
+    box.appendChild(t); box.appendChild(p);
+    document.body.insertBefore(box, document.body.firstChild.nextSibling);
+  })();
+})();
+</script>
+</body>
+</html>
