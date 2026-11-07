@@ -43,8 +43,8 @@ if (!target || target === resolve('.')) {
 const proxyCandidates = [
   join(HERE, 'lib', 'proxy.mjs'),
   join(HERE, '..', 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'),
-  join(HERE, '..', 'packages', 'dsh-anywhere-zcode', 'lib', 'proxy.mjs'),
-  join(HERE, '..', 'node_modules', 'dsh-anywhere-zcode', 'lib', 'proxy.mjs'),
+  join(HERE, '..', 'packages', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'),
+  join(HERE, '..', 'node_modules', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'),
   join(HERE, '..', 'dsh-anywhere', 'lib', 'proxy.mjs'),
   join(HERE, '..', 'lib', 'proxy.mjs'),   // 从 dsh-anywhere 仓库的 zcode-rc/ 直接跑
 ];

@@ -1,5 +1,5 @@
-# dsh-anywhere-zcode bundle patch
+# dsh-anywhere-hub bundle patch
 # id 固定 dsh-anywhere：改名不产生第二个实例（避免 3083 双绑 / 重复注册）
 - insert:
     - id: dsh-anywhere
-      name: dsh-anywhere-zcode
+      name: dsh-anywhere-hub

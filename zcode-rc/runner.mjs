@@ -30,7 +30,7 @@ function firstExisting(list, fallback) {
 const PROXY_MJS = firstExisting([
   process.env.ZCODE_RC_PROXY || '',
   join(SKILL_ROOT, 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'),  // 本机 = E:/desktop/所有skill/packages/...
-  join(SKILL_ROOT, 'packages', 'dsh-anywhere-zcode', 'lib', 'proxy.mjs'), // 新包名目录（别人 clone 后就是这个名字）
+  join(SKILL_ROOT, 'packages', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'), // 新包名目录（别人 clone 后就是这个名字）
   join(GATEWAY_DIR, 'lib', 'proxy.mjs'),                             // 别人：把 proxy.mjs 放在网关目录下即可
   join(GATEWAY_DIR, '..', 'lib', 'proxy.mjs'),                       // 从 dsh-anywhere 仓库的 zcode-rc/ 直接跑
 ], join(SKILL_ROOT, 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'));

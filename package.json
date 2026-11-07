@@ -1,7 +1,7 @@
 {
-  "name": "dsh-anywhere-zcode",
-  "version": "1.1.0",
-  "description": "DSH 手机访问 + ZCode 手机远程页二合一：多设备同时在线无缝切换、实时同屏收发、锁屏秒级自愈（Fast-Resume），3083 端口统一主控；内置 zcode-rc 网关，把 ZCode 桌面端远程页反代到局域网，iOS 16.3 起可正常打开。包名 dsh-anywhere-zcode 为独有命名，与 npm 上任何同名/近名包无关。",
+  "name": "dsh-anywhere-hub",
+  "version": "1.2.0",
+  "description": "DSH 手机访问 + 任意 Web 上游手机化枢纽：多设备同时在线无缝切换、实时同屏收发、锁屏秒级自愈（Fast-Resume），3083 端口统一主控；内置 zcode-rc 网关，可把 ZCode 桌面端以及后续任意 Web 页面反代到局域网，iOS 16.3 起可正常打开。包名 dsh-anywhere-hub 为独有命名，与 npm 上任何同名/近名包无关。",
   "type": "module",
   "main": "lib/index.js",
   "bin": {
@@ -41,11 +41,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/liushQAQ/dsh-anywhere-zcode.git"
+    "url": "git+https://github.com/liushQAQ/dsh-anywhere-hub.git"
   },
-  "homepage": "https://github.com/liushQAQ/dsh-anywhere-zcode#readme",
+  "homepage": "https://github.com/liushQAQ/dsh-anywhere-hub#readme",
   "bugs": {
-    "url": "https://github.com/liushQAQ/dsh-anywhere-zcode/issues"
+    "url": "https://github.com/liushQAQ/dsh-anywhere-hub/issues"
   },
   "author": "liushQAQ",
   "license": "MIT",
@@ -57,9 +57,10 @@
     "remote",
     "qr",
     "tunnel",
+    "web-hub",
     "zcode",
     "zcode-remote",
-    "dsh-anywhere-zcode"
+    "dsh-anywhere-hub"
   ],
   "dsh": {
     "bundle": {
