@@ -97,11 +97,12 @@ function PocketSettingsTab({ rpcCall, t }) {
     try { sessionStorage.removeItem('dshp-auto-reloaded'); } catch { /* 忽略 */ }
   }, []);
 
-  // 版本检测：host 当前版本 vs npm registry latest（registry 带 CORS *）
+  // 版本检测：host 当前版本 vs 仓库里的 package.json（GitHub raw 带 CORS *）
   // 两种情况显示横幅：① 有新版可更新；② 磁盘已更新但进程还是旧代码（重启生效）
-  // cache: 'no-store' —— registry 响应带缓存头，浏览器会缓存旧版本号导致「小版本不提示」
-  // 周期重查（每 5 分钟）：npm registry 的 /latest 走 CDN 边缘缓存，刚发布后打开页面
-  // 可能拿到旧版本号——周期性重查让更新提示在缓存刷新后自动出现，不用重开页面。
+  // cache: 'no-store' —— raw 响应会被浏览器缓存，不清会拿到旧版本号导致「小版本不提示」
+  // 周期重查（每 5 分钟）：raw 走 CDN 边缘缓存，刚提交后打开页面可能拿到旧版本号，
+  // 周期性重查让更新提示在缓存刷新后自动出现，不用重开页面。
+  // 注意：本插件不发 npm（包名 dsh-anywhere-zcode 为独有命名），所以只能查 GitHub。
   // 桌面端（isDesktop）：更新/重启由 DSH Desktop 管理，这里不做版本检测、不显示更新横幅
   useEffect(() => {
     if (isDesktop) return;
@@ -109,7 +110,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     const check = async () => {
       try {
         const v = await call(ANYWHERE_ENDPOINTS.version, {});
-        const meta = await (await fetch('https://registry.npmjs.org/dsh-anywhere/latest', { cache: 'no-store' })).json();
+        const meta = await (await fetch('https://raw.githubusercontent.com/liushQAQ/dsh-anywhere-zcode/main/package.json', { cache: 'no-store' })).json();
         if (!alive) return;
         const latest = typeof meta?.version === 'string' ? meta.version : null;
         if (latest && v.current && compareVersions(latest, v.current) > 0) {
@@ -422,7 +423,7 @@ function PocketSettingsTab({ rpcCall, t }) {
       h('div', { style: { fontSize: 12, color: 'var(--dsw-alias-label-tertiary,#8b93a1)', textAlign: 'right' } },
         h('div', { style: { whiteSpace: 'nowrap' } }, t('developer')),
         h('div', { style: { whiteSpace: 'nowrap' } }, t('starAsk')),
-        h('a', { href: 'https://github.com/liushQAQ/dsh-anywhere', target: '_blank', rel: 'noreferrer', style: { color: 'var(--dsw-alias-brand-primary,#4f6ef7)', fontSize: 12, lineHeight: 1.6, textDecoration: 'underline' } },
+        h('a', { href: 'https://github.com/liushQAQ/dsh-anywhere-zcode', target: '_blank', rel: 'noreferrer', style: { color: 'var(--dsw-alias-brand-primary,#4f6ef7)', fontSize: 12, lineHeight: 1.6, textDecoration: 'underline' } },
           t('starCta')),
       ),
     ),
@@ -689,7 +690,7 @@ function PocketSettingsTab({ rpcCall, t }) {
 
     // 页面最底部：反馈入口
     h('div', { style: { ...styles.block, textAlign: 'center' } },
-      h('a', { href: 'https://github.com/liushQAQ/dsh-anywhere/issues', target: '_blank', rel: 'noreferrer', style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#6b7280)', textDecoration: 'none' } },
+      h('a', { href: 'https://github.com/liushQAQ/dsh-anywhere-zcode/issues', target: '_blank', rel: 'noreferrer', style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#6b7280)', textDecoration: 'none' } },
         t('feedback')),
     ),
   );

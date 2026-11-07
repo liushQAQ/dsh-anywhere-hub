@@ -2275,7 +2275,7 @@ var zh2 = {
   "restartingDetail": "\u23F3 \u6B63\u5728\u91CD\u542F\u751F\u6548\uFF08\u901A\u5E38 10-30 \u79D2\uFF09\xB7 \u5DF2\u7B49\u5F85 {s} \u79D2",
   "updatedAutoDetail": "\u2705 \u5DF2\u66F4\u65B0\uFF0C\u6B63\u5728\u81EA\u52A8\u91CD\u542F\u751F\u6548\uFF0C\u8BF7\u7A0D\u5019\u5237\u65B0",
   "updatedRestartDetail": "\u2705 \u5DF2\u66F4\u65B0\uFF0C\u91CD\u542F dsh web \u751F\u6548",
-  "updateFailed": "\u274C \u5931\u8D25\uFF1A{err}\uFF08\u624B\u52A8\u66F4\u65B0\uFF1Adsh plugin --profile web update dsh-anywhere --latest -w\uFF09",
+  "updateFailed": "\u274C \u5931\u8D25\uFF1A{err}\uFF08\u624B\u52A8\u66F4\u65B0\uFF1Adsh plugin --profile web update dsh-anywhere-zcode --latest -w\uFF09",
   "versionRange": "\u5F53\u524D v{cur} \u2192 \u6700\u65B0 v{latest}",
   "wanAccess": "\u516C\u7F51\u8BBF\u95EE",
   "pinLabel": "\u8BBF\u95EE\u5BC6\u7801",
@@ -2379,7 +2379,7 @@ var en2 = {
   "restartingDetail": "\u23F3 Restarting to apply (usually 10-30s) \xB7 {s}s elapsed",
   "updatedAutoDetail": "\u2705 Updated \u2014 auto-restarting in progress, refresh shortly",
   "updatedRestartDetail": "\u2705 Updated \u2014 restart dsh web to apply",
-  "updateFailed": "\u274C Failed: {err} (manual update: dsh plugin --profile web update dsh-anywhere --latest -w)",
+  "updateFailed": "\u274C Failed: {err} (manual update: dsh plugin --profile web update dsh-anywhere-zcode --latest -w)",
   "versionRange": "Current v{cur} \u2192 latest v{latest}",
   "wanAccess": "Public access",
   "pinLabel": "Access PIN",
@@ -2543,7 +2543,7 @@ function PocketSettingsTab({ rpcCall, t }) {
     const check = async () => {
       try {
         const v = await call(ANYWHERE_ENDPOINTS.version, {});
-        const meta = await (await fetch("https://registry.npmjs.org/dsh-anywhere/latest", { cache: "no-store" })).json();
+        const meta = await (await fetch("https://raw.githubusercontent.com/liushQAQ/dsh-anywhere-zcode/main/package.json", { cache: "no-store" })).json();
         if (!alive) return;
         const latest = typeof meta?.version === "string" ? meta.version : null;
         if (latest && v.current && compareVersions(latest, v.current) > 0) {
@@ -2860,7 +2860,7 @@ function PocketSettingsTab({ rpcCall, t }) {
         (0, import_react2.createElement)("div", { style: { whiteSpace: "nowrap" } }, t("starAsk")),
         (0, import_react2.createElement)(
           "a",
-          { href: "https://github.com/liushQAQ/dsh-anywhere", target: "_blank", rel: "noreferrer", style: { color: "var(--dsw-alias-brand-primary,#4f6ef7)", fontSize: 12, lineHeight: 1.6, textDecoration: "underline" } },
+          { href: "https://github.com/liushQAQ/dsh-anywhere-zcode", target: "_blank", rel: "noreferrer", style: { color: "var(--dsw-alias-brand-primary,#4f6ef7)", fontSize: 12, lineHeight: 1.6, textDecoration: "underline" } },
           t("starCta")
         )
       )
@@ -3194,7 +3194,7 @@ function PocketSettingsTab({ rpcCall, t }) {
       { style: { ...styles.block, textAlign: "center" } },
       (0, import_react2.createElement)(
         "a",
-        { href: "https://github.com/liushQAQ/dsh-anywhere/issues", target: "_blank", rel: "noreferrer", style: { fontSize: 12, color: "var(--dsw-alias-label-secondary,#6b7280)", textDecoration: "none" } },
+        { href: "https://github.com/liushQAQ/dsh-anywhere-zcode/issues", target: "_blank", rel: "noreferrer", style: { fontSize: 12, color: "var(--dsw-alias-label-secondary,#6b7280)", textDecoration: "none" } },
         t("feedback")
       )
     )
