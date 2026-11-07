@@ -175,12 +175,13 @@ plugins:
 ZCode 桌面端自带一个「手机远程控制」网页（官方源 `https://zcode.z.ai/remote/v4`）。
 DSH iOS App 本身就是一个 WKWebView 壳，**不用改一行 App 代码就能打开它**——但直接开官方地址有三个硬伤：
 
-### 需要装什么（装两样就够）
+### 需要装什么（三样，缺一不可）
 
 | 装哪边 | 装什么 | 说明 |
 |---|---|---|
 | 手机 | DSH iOS App（`github.com/liushQAQ/IOS`） | 薄壳 WKWebView，**同一个 App 既连 DSH 也开 ZCode**，两边各开各的地址 |
-| 电脑 | 本插件 dsh-anywhere | 反代 + ES2023 垫片，手机才有得开；`github:` 前缀不能省，npm 上的同名包不是这个 |
+| 电脑 | 本插件 dsh-anywhere | 反代 + ES2023 垫片（改写层本体）；`github:` 前缀不能省，npm 上的同名包不是这个 |
+| 电脑 | `zcode-rc-gateway`（随本仓库 `install.mjs` 装） | ZCode 手机页的**唯一入口** `:3090/rc`：`/rc` 破缓存 + `viewport-fit` 安全区 + 免登录注入 |
 | 电脑 | ZCode 桌面端 | 保持**官方原版**，一个字不改；改过就连不上官方中继 |
 
 App 内「连接说明与教程」第 4 步就是这一章的手机版图文，装机后照着点即可。
