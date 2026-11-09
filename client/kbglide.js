@@ -302,7 +302,7 @@ export function installComposerFix() {
   if (!W) return;
   var D = W.document;
   if (!D || W.__zcrcComposerFix) return;
-  W.__zcrcComposerFix = 'v1';
+  W.__zcrcComposerFix = 'v2';
 
   var suppressUntil = 0;
   function now() {
@@ -334,25 +334,83 @@ export function installComposerFix() {
     (D.head || D.documentElement).appendChild(st);
   } catch (e) {}
 
-  /* ① 发送/停止按钮点击 → 抑制窗口 */
+  /* 信标：会话框键盘链路诊断 → 3090 网关日志（跨域 no-cors，失败静默） */
+  var beaconLast = 0;
+  function beacon(msg) {
+    try {
+      var ts = Date.now();
+      if (ts - beaconLast < 1200) return;
+      beaconLast = ts;
+      var host = location.hostname;
+      if (!host || location.protocol === 'file:') return;
+      var url = 'http://' + host + ':3090/zcode-rc-api/__beacon?m=' + encodeURIComponent('DSHKB ' + msg + ' v=' + (W.__zcrcKbGlide || '?'));
+      if (navigator.sendBeacon) { navigator.sendBeacon(url); return; }
+      W.fetch(url, { mode: 'no-cors', keepalive: true }).catch(function () {});
+    } catch (e) {}
+  }
+
+  /* 定位会话框输入框：哈希类名优先，退化为「底部宽输入框」 */
+  function composerEditor() {
+    var eds = D.querySelectorAll('textarea,[contenteditable="true"]');
+    var i, ed;
+    for (i = 0; i < eds.length; i++) {
+      ed = eds[i];
+      if (ed.closest && ed.closest('[class*="CHtLlW_root"],[class*="composerStack"]')) return ed;
+    }
+    for (i = 0; i < eds.length; i++) {
+      ed = eds[i];
+      var rr = ed.getBoundingClientRect();
+      if (rr.width > innerWidth * 0.6 && rr.top > innerHeight * 0.5) return ed;
+    }
+    return null;
+  }
+
+  /* ① 发送/停止按钮点击（2026-11-10 重做）：
+   *    - 输入框本来没聚焦（键盘关着）→ 拦掉随后的页面自动重聚焦（老诉求：点发送键盘又弹）；
+   *    - 输入框正在聚焦（排队连发场景）→ 保持聚焦：不 blur、不抑制，键盘不塌，
+   *      待发送第二条直接打字。旧版无条件 blur+抑制，是「排队后再点会话框弹不出键盘」
+   *      链路里我们自己埋的一环。 */
   try {
     D.addEventListener('click', function (e) {
       var t = e.target;
       if (!t || !t.closest) return;
       if (t.closest('[class*="CHtLlW_primary"]')) {
-        suppressUntil = now() + 900;
-        try { if (D.activeElement && D.activeElement.blur) D.activeElement.blur(); } catch (e2) {}
+        var ed = composerEditor();
+        var hadFocus = !!(ed && (ed === D.activeElement || (ed.contains && ed.contains(D.activeElement))));
+        if (!hadFocus) suppressUntil = now() + 900;
+        beacon('send hf=' + (hadFocus ? 1 : 0));
       }
     }, true);
   } catch (e) {}
 
-  /* ② 用户真点输入框 → 立即解除抑制 */
+  /* ②+④ 用户真点会话框输入框：解除抑制 + 手势内同步聚焦。
+   * iOS WKWebView 只认「用户手势内同步调用的 focus」弹键盘；排队等状态下 React 的
+   * onClick focus 可能不触发或被任何一层吞掉 → 在 touchstart 捕获段直接补 focus。
+   * App 层放行监听（document_start 注册）先于本监听执行：点输入框即放行 1.5s，链路自洽。 */
+  try {
+    var touchFocus = function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var ed = isTextInput(t) ? t : null;
+      if (!ed) { var c = t.closest('[contenteditable="true"],textarea'); if (c && isTextInput(c)) ed = c; }
+      if (!ed) return;
+      var inComposer = ed.closest('[class*="CHtLlW_root"],[class*="composerStack"]');
+      if (!inComposer) {
+        var r = ed.getBoundingClientRect();
+        if (!(r.width > innerWidth * 0.6 && r.top > innerHeight * 0.5)) return;   // 只管会话框，不碰代码块/搜索框
+      }
+      suppressUntil = 0;
+      if (D.activeElement === ed || (ed.contains && ed.contains(D.activeElement))) return;
+      try { ed.focus({ preventScroll: true }); } catch (e2) { try { ed.focus(); } catch (e3) {} }
+      beacon('assist y=' + Math.round(ed.getBoundingClientRect().top));
+    };
+    D.addEventListener('touchstart', touchFocus, true);
+  } catch (e) {}
   try {
     var release = function (e) {
       var t = e.target;
       if (t && isTextInput(t)) suppressUntil = 0;
     };
-    D.addEventListener('touchstart', release, true);
     D.addEventListener('mousedown', release, true);
   } catch (e) {}
 

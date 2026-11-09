@@ -28,7 +28,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// client/index.jsx
+// index.jsx
 var index_exports = {};
 __export(index_exports, {
   apply: () => apply,
@@ -39,7 +39,7 @@ __export(index_exports, {
 module.exports = __toCommonJS(index_exports);
 var import_react2 = require("react");
 
-// client/api.js
+// api.js
 var ANYWHERE_RPC_CHANNEL = "/dsh-anywhere-hub";
 var ANYWHERE_RPC_CHANNEL_LEGACY = "/dsh-anywhere";
 var ANYWHERE_RPC_CHANNELS = Object.freeze([ANYWHERE_RPC_CHANNEL, ANYWHERE_RPC_CHANNEL_LEGACY]);
@@ -107,7 +107,7 @@ function redactStatus(s) {
   };
 }
 
-// client/mobile/MobileNavToggle.tsx
+// mobile/MobileNavToggle.tsx
 var import_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
 function MobileNavToggle({ toggleSidebar, t }) {
   const toggleExplorer = () => {
@@ -142,11 +142,11 @@ function MobileNavToggle({ toggleSidebar, t }) {
   ));
 }
 
-// client/mobile/MobileNavOverlay.tsx
+// mobile/MobileNavOverlay.tsx
 var import_react = require("react");
 var import_dsh_client_ui_primitives2 = require("@deepseek-ai/dsh-client-ui-primitives");
 
-// client/mobile/nav-targets.mjs
+// mobile/nav-targets.mjs
 var DRAWER_SELECTOR = '[data-mobile-nav="frame"] > :first-child';
 var TOGGLE_SELECTOR = '[data-mobile-nav="toggle"]';
 var NAV_TARGETS = [
@@ -179,7 +179,7 @@ function isOverlayTap(target) {
   return target.closest(OVERLAY_SELECTOR) !== null;
 }
 
-// client/mobile/MobileNavOverlay.tsx
+// mobile/MobileNavOverlay.tsx
 var MOBILE_QUERY = "(max-width: 1023px)";
 function useMobile() {
   const [mobile, setMobile] = (0, import_react.useState)(() => window.matchMedia(MOBILE_QUERY).matches);
@@ -368,7 +368,7 @@ function MobileNavOverlay({ toggleSidebar, t }) {
   ));
 }
 
-// client/mobile/MobileDrawerFooter.tsx
+// mobile/MobileDrawerFooter.tsx
 var import_dsh_client_ui_primitives3 = require("@deepseek-ai/dsh-client-ui-primitives");
 function MobileDrawerFooter({ useSessions, downloadSessionLog, toggleSidebar, t }) {
   const sessionId = useSessions((state) => state.current);
@@ -404,7 +404,7 @@ function MobileDrawerFooter({ useSessions, downloadSessionLog, toggleSidebar, t 
   ));
 }
 
-// client/mobile/fileGuard.ts
+// mobile/fileGuard.ts
 var GUARD_MSG = "\u624B\u673A\u4E0A\u65E0\u6CD5\u76F4\u63A5\u6253\u5F00\u7535\u8111\u4E0A\u7684\u6587\u4EF6";
 var WS_LABELS = ["\u6DFB\u52A0\u5DE5\u4F5C\u533A", "\u6DFB\u52A0\u5DE5\u4F5C\u533A\u2026", "Add workspace", "Add workspace\u2026"];
 var COPY_LABEL = "\u590D\u5236";
@@ -567,7 +567,7 @@ function startFileGuard(readFile) {
   };
 }
 
-// client/mobile/mobile.css.ts
+// mobile/mobile.css.ts
 var MOBILE_CSS = `
 /* ---------- base control styles (rendered at any width, hidden where unused) ---------- */
 
@@ -1958,7 +1958,7 @@ var MOBILE_CSS = `
 
 `;
 
-// client/mobile/locales.ts
+// mobile/locales.ts
 var NS = "mobileNav";
 var zh = {
   "open": "\u6253\u5F00\u76EE\u5F55",
@@ -1975,7 +1975,7 @@ var en = {
   "files": "Files"
 };
 
-// client/mobile/layout-mode.mjs
+// mobile/layout-mode.mjs
 var LAYOUT_KEY = "dsh-anywhere-hub.layout";
 var LAYOUT_KEY_LEGACY = "dsh-anywhere.layout";
 function resolveLayout({ urlValue, stored, narrowMatch }) {
@@ -2006,7 +2006,7 @@ function persistLayoutFromUrl(urlValue) {
   }
 }
 
-// client/mobile/mobile-apply.tsx
+// mobile/mobile-apply.tsx
 function mobileApply(ctx) {
   const urlValue = new URL(window.location.href).searchParams.get("dsh-layout") ?? "";
   const narrowMQ = window.matchMedia("(max-width: 1023px)");
@@ -2259,7 +2259,7 @@ function mobileApply(ctx) {
   }, MobileDrawerFooter));
 }
 
-// client/anywhere-locales.js
+// anywhere-locales.js
 var NS2 = "anywhere";
 var zh2 = {
   "section": "\u624B\u673A\u8BBF\u95EE",
@@ -2470,7 +2470,7 @@ var en2 = {
   "feedback": "\u{1F64F} Questions? Open an issue on GitHub"
 };
 
-// client/kbglide.js
+// kbglide.js
 function installKbGlide() {
   var W = typeof window !== "undefined" ? window : null;
   if (!W) return;
@@ -2759,7 +2759,7 @@ function installComposerFix() {
   if (!W) return;
   var D = W.document;
   if (!D || W.__zcrcComposerFix) return;
-  W.__zcrcComposerFix = "v1";
+  W.__zcrcComposerFix = "v2";
   var suppressUntil = 0;
   function now() {
     try {
@@ -2794,18 +2794,79 @@ function installComposerFix() {
     (D.head || D.documentElement).appendChild(st);
   } catch (e) {
   }
+  var beaconLast = 0;
+  function beacon(msg) {
+    try {
+      var ts = Date.now();
+      if (ts - beaconLast < 1200) return;
+      beaconLast = ts;
+      var host = location.hostname;
+      if (!host || location.protocol === "file:") return;
+      var url = "http://" + host + ":3090/zcode-rc-api/__beacon?m=" + encodeURIComponent("DSHKB " + msg + " v=" + (W.__zcrcKbGlide || "?"));
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(url);
+        return;
+      }
+      W.fetch(url, { mode: "no-cors", keepalive: true }).catch(function() {
+      });
+    } catch (e) {
+    }
+  }
+  function composerEditor() {
+    var eds = D.querySelectorAll('textarea,[contenteditable="true"]');
+    var i, ed;
+    for (i = 0; i < eds.length; i++) {
+      ed = eds[i];
+      if (ed.closest && ed.closest('[class*="CHtLlW_root"],[class*="composerStack"]')) return ed;
+    }
+    for (i = 0; i < eds.length; i++) {
+      ed = eds[i];
+      var rr = ed.getBoundingClientRect();
+      if (rr.width > innerWidth * 0.6 && rr.top > innerHeight * 0.5) return ed;
+    }
+    return null;
+  }
   try {
     D.addEventListener("click", function(e) {
       var t = e.target;
       if (!t || !t.closest) return;
       if (t.closest('[class*="CHtLlW_primary"]')) {
-        suppressUntil = now() + 900;
-        try {
-          if (D.activeElement && D.activeElement.blur) D.activeElement.blur();
-        } catch (e2) {
-        }
+        var ed = composerEditor();
+        var hadFocus = !!(ed && (ed === D.activeElement || ed.contains && ed.contains(D.activeElement)));
+        if (!hadFocus) suppressUntil = now() + 900;
+        beacon("send hf=" + (hadFocus ? 1 : 0));
       }
     }, true);
+  } catch (e) {
+  }
+  try {
+    var touchFocus = function(e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var ed = isTextInput(t) ? t : null;
+      if (!ed) {
+        var c = t.closest('[contenteditable="true"],textarea');
+        if (c && isTextInput(c)) ed = c;
+      }
+      if (!ed) return;
+      var inComposer = ed.closest('[class*="CHtLlW_root"],[class*="composerStack"]');
+      if (!inComposer) {
+        var r = ed.getBoundingClientRect();
+        if (!(r.width > innerWidth * 0.6 && r.top > innerHeight * 0.5)) return;
+      }
+      suppressUntil = 0;
+      if (D.activeElement === ed || ed.contains && ed.contains(D.activeElement)) return;
+      try {
+        ed.focus({ preventScroll: true });
+      } catch (e2) {
+        try {
+          ed.focus();
+        } catch (e3) {
+        }
+      }
+      beacon("assist y=" + Math.round(ed.getBoundingClientRect().top));
+    };
+    D.addEventListener("touchstart", touchFocus, true);
   } catch (e) {
   }
   try {
@@ -2813,7 +2874,6 @@ function installComposerFix() {
       var t = e.target;
       if (t && isTextInput(t)) suppressUntil = 0;
     };
-    D.addEventListener("touchstart", release, true);
     D.addEventListener("mousedown", release, true);
   } catch (e) {
   }
@@ -2827,7 +2887,7 @@ function installComposerFix() {
   }
 }
 
-// client/index.jsx
+// index.jsx
 installKbGlide();
 installRevWatch();
 installComposerFix();
