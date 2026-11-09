@@ -39,11 +39,10 @@ if (!target || target === resolve('.')) {
   process.exit(2);
 }
 
-/** proxy.mjs 的候选位置：安装包自带 > 同级 packages 分区（目录名唯一 dsh-anywhere-hub，旧名兜底） */
+/** proxy.mjs 的候选位置：安装包自带 > 同级 packages 分区（目录名唯一 dsh-anywhere-hub，无裸名） */
 const proxyCandidates = [
   join(HERE, 'lib', 'proxy.mjs'),
   join(HERE, '..', 'packages', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'),
-  join(HERE, '..', 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'),
   join(HERE, '..', 'node_modules', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'),
   join(HERE, '..', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'),
   join(HERE, '..', 'lib', 'proxy.mjs'),   // 从 dsh-anywhere-hub 仓库的 zcode-rc/ 直接跑

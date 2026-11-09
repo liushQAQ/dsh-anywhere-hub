@@ -1,5 +1,5 @@
 // ZCode 手机远程控制网关（独立端口 3090）—— 2026-11-01 老总拍板与 DSH 3083 解耦。
-// 复用 dsh-anywhere 的改写管线（iOS 16.3 语法降级 + polyfill + ETag 破冰 + 中继 WS 隧道），
+// 复用 dsh-anywhere-hub 的改写管线（iOS 16.3 语法降级 + polyfill + ETag 破冰 + 中继 WS 隧道），
 // allowedPaths 锁死作用域：仅放行 ZCode 远程页相关路径，不暴露 DSH web。
 // 自启：计划任务 ZcodeRcGateway-3090（S4U + Hidden）；登记：port-manager/services-config.json。
 'use strict';
@@ -30,7 +30,6 @@ function firstExisting(list, fallback) {
 const PROXY_MJS = firstExisting([
   process.env.ZCODE_RC_PROXY || '',
   join(SKILL_ROOT, 'packages', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'), // 本机 = E:/desktop/所有skill/packages/dsh-anywhere-hub
-  join(SKILL_ROOT, 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'),     // 旧目录名（已改名，保留兜底）
   join(GATEWAY_DIR, 'lib', 'proxy.mjs'),                             // 别人：把 proxy.mjs 放在网关目录下即可
   join(GATEWAY_DIR, '..', 'lib', 'proxy.mjs'),                       // 从 dsh-anywhere-hub 仓库的 zcode-rc/ 直接跑
 ], join(SKILL_ROOT, 'packages', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'));

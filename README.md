@@ -310,6 +310,22 @@ iOS 16.0–16.2、iOS 15 理论上被同一套垫片覆盖，但没有真机验�
 
 ## 🗒 更新日志
 
+### v1.2.6（2026-11-09）
+
+* **把上一版留的「旧目录兜底」也清掉了（老总令：必须都带 hub，一处不带都不行）**：
+  v1.2.5 虽然把目录/包名/id 全改了，但 `proxy.mjs` 的候选列表里还留着一条
+  `packages/dsh-anywhere/lib/proxy.mjs`（注释写「旧目录名兜底」），网关侧的 `runner.mjs` /
+  `install.mjs` 同样各留一条，分发 zip 里也带着。实测那个目录**早已不存在**，是纯死代码，
+  却让「到底叫哪个名」继续含糊 → 本轮全部删除，任何地方都不再出现裸名候选。
+* **旧状态目录已归档**：`$DSH_HOME/dsh-anywhere/` 里 4 个文件（token / token-lan / session-key /
+  settings.json）与 `$DSH_HOME/dsh-anywhere-hub/` 逐字节相同、迁移早已完成，故整目录移到
+  `E:\desktop\所有skill\backup\dsh-home-legacy-dsh-anywhere-20261109\`（只移不删，可一键还原）。
+  代码里的一次性迁移读取保留：目录不存在时直接 return，不报错。
+* **文档同步**：`docs/DSH架构与插件权威规范_3083主控.md`、`docs/DSH自研插件仓库推送与维护SOP.md`、
+  `docs/ZCode手机远程控制网关-20261101.md` 里的旧仓库地址 `liushQAQ/dsh-anywhere` 与旧路径
+  `packages\dsh-anywhere` 一并改为 `-hub`；`port-manager` 六处注释同样统一。
+* 版本号 1.2.5 → 1.2.6。
+
 ### v1.2.5（2026-11-09）
 
 * **命名全量统一（老总令：必须都带 hub，不许一会带一会不带）**：原先部署路径是
