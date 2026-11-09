@@ -290,6 +290,22 @@ iOS 16.0–16.2、iOS 15 理论上被同一套垫片覆盖，但没有真机验�
 
 ## 🗒 更新日志
 
+### v1.2.4（2026-11-09）
+
+* **会话框键盘跟手（`client/kbglide.js`，v5）**：点输入框时输入区与键盘**同刻同长**一起上滑、收键盘一起回落，
+  不再「啪」地整块跳 300px。协议为 App 侧在 `keyboardWillChangeFrame` 里调
+  `window.__zcrcKbWill(px, ms)`（iOS App 2.2.1/152 起提供）；页面侧只在合成层写 `transform`，
+  不读 `getBoundingClientRect`/`getComputedStyle`（旧版逐帧采样会占满主线程，正是「卡顿」来源）。
+  `resize` 之后按 rAF / 60ms / 160ms 三拍交接，抓住 WebKit「先发 resize、后改布局」的时序。
+* **老 App / Safari 兜底**：没有 `__zcrcKbWill` 时，只处理「一次性跳变（≥60px）」并补 240ms 滑行；
+  逐帧小步由原生驱动时不插手。仅触摸设备生效，`prefers-reduced-motion` 下全关。
+* **外观跟随系统（撤回 v1.2.3 恒暗）**：`meta color-scheme` 由 `dark` 改回 `light dark`，
+  并把出厂主题 `zcode-theme=zai-dark` **一次性**迁移为 `system`（迁后打 `zcrc-theme-auto` 标记，
+  用户手动选深色不再被改回）。系统浅色→白、深色→黑，实时跟随。
+* **构建修正**：`client/build.mjs` 的模块 id 取 `package.json` 的 `name`，修掉
+  `loaded without registering "dsh-anywhere-hub"`。
+* **版本号对齐**：`package.json` 1.2.0 → 1.2.4（此前后续提交只写在 commit message 里）。
+
 ### v1.2.0
 
 * **改名：`dsh-anywhere-zcode` → `dsh-anywhere-hub`**。v1.1.0 那版带 `zcode` 的后缀太窄——
