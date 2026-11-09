@@ -1,4 +1,4 @@
-/* dsh-anywhere · DSH 会话框「键盘跟手」补丁（kbglide v5，2026-11-09）
+/* dsh-anywhere-hub · DSH 会话框「键盘跟手」补丁（kbglide v5，2026-11-09）
    ─────────────────────────────────────────────────────────────────────
    目标：在 DSH 网页（3083）里点会话框，输入区跟着键盘一起平滑上滑/回落，
         不再「啪」地整块跳 300px。
@@ -202,7 +202,7 @@ export function installRevWatch() {
   } catch (e) {}
   if (!ownRev) return;
 
-  var KEY = 'dsh-anywhere-rev-reloaded';
+  var KEY = 'dsh-anywhere-hub-rev-reloaded';
   var lastAct = 0;
   function mark() {
     try { lastAct = performance.now(); } catch (e) { lastAct = Date.now(); }

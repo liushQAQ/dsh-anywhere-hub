@@ -40,7 +40,9 @@ module.exports = __toCommonJS(index_exports);
 var import_react2 = require("react");
 
 // client/api.js
-var ANYWHERE_RPC_CHANNEL = "/dsh-anywhere";
+var ANYWHERE_RPC_CHANNEL = "/dsh-anywhere-hub";
+var ANYWHERE_RPC_CHANNEL_LEGACY = "/dsh-anywhere";
+var ANYWHERE_RPC_CHANNELS = Object.freeze([ANYWHERE_RPC_CHANNEL, ANYWHERE_RPC_CHANNEL_LEGACY]);
 var ANYWHERE_ENDPOINTS = Object.freeze({
   status: "anywhere.status",
   tunnelStart: "tunnel.start",
@@ -1974,6 +1976,8 @@ var en = {
 };
 
 // client/mobile/layout-mode.mjs
+var LAYOUT_KEY = "dsh-anywhere-hub.layout";
+var LAYOUT_KEY_LEGACY = "dsh-anywhere.layout";
 function resolveLayout({ urlValue, stored, narrowMatch }) {
   const url = String(urlValue ?? "").trim();
   if (url === "desktop") return "desktop";
@@ -1985,12 +1989,17 @@ function persistLayoutFromUrl(urlValue) {
   if (typeof localStorage === "undefined") return "";
   const v = String(urlValue ?? "").trim();
   try {
-    if (v === "desktop" || v === "mobile") localStorage.setItem("dsh-anywhere.layout", v);
-    else if (v === "auto" || v === "") localStorage.removeItem("dsh-anywhere.layout");
+    const old = localStorage.getItem(LAYOUT_KEY_LEGACY);
+    if ((old === "desktop" || old === "mobile") && !localStorage.getItem(LAYOUT_KEY)) {
+      localStorage.setItem(LAYOUT_KEY, old);
+    }
+    if (v === "desktop" || v === "mobile") localStorage.setItem(LAYOUT_KEY, v);
+    else if (v === "auto" || v === "") localStorage.removeItem(LAYOUT_KEY);
+    localStorage.removeItem(LAYOUT_KEY_LEGACY);
   } catch {
   }
   try {
-    const s = localStorage.getItem("dsh-anywhere.layout");
+    const s = localStorage.getItem(LAYOUT_KEY);
     return s === "desktop" || s === "mobile" ? s : "";
   } catch {
     return "";
@@ -2003,7 +2012,7 @@ function mobileApply(ctx) {
   const narrowMQ = window.matchMedia("(max-width: 1023px)");
   const stored = persistLayoutFromUrl(urlValue);
   const layout = resolveLayout({ urlValue, stored, narrowMatch: narrowMQ.matches });
-  document.body?.setAttribute("data-dsh-anywhere-layout", layout);
+  document.body?.setAttribute("data-dsh-anywhere-hub-layout", layout);
   if (layout === "desktop") return;
   let narrow = narrowMQ;
   if (layout === "mobile") {
@@ -2662,7 +2671,7 @@ function installRevWatch() {
   } catch (e) {
   }
   if (!ownRev) return;
-  var KEY = "dsh-anywhere-rev-reloaded";
+  var KEY = "dsh-anywhere-hub-rev-reloaded";
   var lastAct = 0;
   function mark() {
     try {
@@ -2705,7 +2714,7 @@ function installRevWatch() {
 // client/index.jsx
 installKbGlide();
 installRevWatch();
-var name = "dsh-anywhere";
+var name = "dsh-anywhere-hub";
 var inject = ["slots", "connection", "layout", "locale", "sessionLogDownload"];
 function fmt(t, key, vars) {
   let s = t(key);
@@ -3455,9 +3464,14 @@ function apply(ctx) {
     }
   }
   mobileApply(ctx);
-  const rpcCall = (endpoint, payload, signal) => ctx.connection.rpc.call(ANYWHERE_RPC_CHANNEL, endpoint, payload, signal);
+  let rpcChannel = ANYWHERE_RPC_CHANNEL;
+  const rpcCall = (endpoint, payload, signal) => ctx.connection.rpc.call(rpcChannel, endpoint, payload, signal).catch((err) => {
+    if (rpcChannel === ANYWHERE_RPC_CHANNEL_LEGACY) throw err;
+    rpcChannel = ANYWHERE_RPC_CHANNEL_LEGACY;
+    return ctx.connection.rpc.call(rpcChannel, endpoint, payload, signal);
+  });
   const translate = ctx.locale.bind(NS2);
-  ctx.effect(() => ctx.locale.register(NS2, { zh: zh2, en: en2 }), "dsh-anywhere: anywhere locale dictionaries");
+  ctx.effect(() => ctx.locale.register(NS2, { zh: zh2, en: en2 }), "dsh-anywhere-hub: anywhere locale dictionaries");
   ctx.slots.inject(
     "settings.section",
     () => ctx.slots.register(

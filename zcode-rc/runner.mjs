@@ -26,14 +26,14 @@ function firstExisting(list, fallback) {
   return fallback;
 }
 
-// ① dsh-anywhere 改写管线（纯 Node 内置依赖，不需要 DSH 运行时）
+// ① dsh-anywhere-hub 改写管线（纯 Node 内置依赖，不需要 DSH 运行时）
 const PROXY_MJS = firstExisting([
   process.env.ZCODE_RC_PROXY || '',
-  join(SKILL_ROOT, 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'),  // 本机 = E:/desktop/所有skill/packages/...
-  join(SKILL_ROOT, 'packages', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'), // 新包名目录（别人 clone 后就是这个名字）
+  join(SKILL_ROOT, 'packages', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'), // 本机 = E:/desktop/所有skill/packages/dsh-anywhere-hub
+  join(SKILL_ROOT, 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'),     // 旧目录名（已改名，保留兜底）
   join(GATEWAY_DIR, 'lib', 'proxy.mjs'),                             // 别人：把 proxy.mjs 放在网关目录下即可
-  join(GATEWAY_DIR, '..', 'lib', 'proxy.mjs'),                       // 从 dsh-anywhere 仓库的 zcode-rc/ 直接跑
-], join(SKILL_ROOT, 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'));
+  join(GATEWAY_DIR, '..', 'lib', 'proxy.mjs'),                       // 从 dsh-anywhere-hub 仓库的 zcode-rc/ 直接跑
+], join(SKILL_ROOT, 'packages', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'));
 
 const PORT = Number(process.env.ZCODE_RC_PORT || 3090);
 // ② 日志：本机沿用集中 logs/ 分区；别人自动落自己目录下

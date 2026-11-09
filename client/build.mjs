@@ -1,4 +1,4 @@
-// dsh-anywhere 网页客户端打包：client/index.jsx → client/client.js
+// dsh-anywhere-hub 网页客户端打包：client/index.jsx → client/client.js
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

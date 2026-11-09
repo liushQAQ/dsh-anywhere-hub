@@ -123,12 +123,32 @@ DSH 移动端抽屉里原本没有任何设置项 —— 真正的设置藏在�
 任何 Web 上游（ZCode 只是第一个）都通过 `zcode-rc/` 这套网关接进来，
 加新平台不用改包名、不用发新版。
 
-两个名字分工，别混：
+一个名字贯穿到底，没有第二个称呼（v1.2.5 起全量统一）：
 
 | 用途 | 值 |
 |---|---|
 | 包名（安装 / 更新用） | `dsh-anywhere-hub` |
-| 插件实例 id、`settings.yaml` 配置键 | `dsh-anywhere`（**故意不变**，升级不会产生第二个实例、不会双绑 3083） |
+| 插件实例 id、`settings.yaml` 配置键 | `dsh-anywhere-hub` |
+| 本地目录 / 部署软链名 | `packages/dsh-anywhere-hub` → `.dsh/profiles/<profile>/node_modules/dsh-anywhere-hub` |
+| 状态目录（PIN / session-key / settings.json） | `$DSH_HOME/dsh-anywhere-hub/` |
+
+旧裸名 `dsh-anywhere` **只作为兼容入口存在，不是任何东西的正式名字**，一共四处，全部只读或只做别名，不会产生第二个实例/第二个目录/第二个包：
+
+| # | 位置 | 作用 | 何时消失 |
+|---|---|---|---|
+| 1 | 旧状态目录 `$DSH_HOME/dsh-anywhere/` | 首次启动把 token / token-lan / session-key / settings.json 复制进 `dsh-anywhere-hub/`，旧目录原样保留 | 手动删（不影响已登录设备） |
+| 2 | 旧 RPC 通道 `/dsh-anywhere` | 宿主同时挂这条，老页面（缓存里的旧 client）不白屏 | 老页面缓存自然淘汰后 |
+| 3 | 旧布局键 `dsh-anywhere.layout` | localStorage 一次性迁移到 `dsh-anywhere-hub.layout` 后删除 | 迁移完即删 |
+| 4 | 旧目录名兜底 `packages/dsh-anywhere/lib/proxy.mjs` | 仅当该路径真实存在才命中；改名后不存在，自动跳过 | 已经在用 hub 路径，永不命中 |
+
+一句话核验（任何机器可跑，输出必须只有 `dsh-anywhere-hub`）：
+
+```bash
+grep -rn "dsh-anywhere" --include="*.js" --include="*.mjs" --include="*.jsx" --include="*.yml" --include="*.json" . \
+  | grep -v "dsh-anywhere-hub" | grep -v node_modules
+```
+
+上面四处就是这条命令的全部产出；出现第五处，说明有人又把裸名写回去了。
 
 ### 1. 安装插件
 在你的 DSH Profile 目录（如 `~/.dsh/profiles/desktop`）下执行：
@@ -159,10 +179,10 @@ pnpm add /path/to/dsh-anywhere-hub-<version>.tgz
 ```
 
 ### 2. 启用插件
-在 `settings.yaml` 中配置启用（键名是**实例 id** `dsh-anywhere`，与包名无关，不用跟着改）：
+在 `settings.yaml` 中配置启用（键名就是实例 id，与包名同名 `dsh-anywhere-hub`）：
 ```yaml
 plugins:
-  dsh-anywhere:
+  dsh-anywhere-hub:
     enabled: true
 ```
 
@@ -273,7 +293,7 @@ iOS 16.0–16.2、iOS 15 理论上被同一套垫片覆盖，但没有真机验�
 
 ---
 
-## ⚙️ 配置文件说明（`~/.dsh/dsh-anywhere/settings.json`）
+## ⚙️ 配置文件说明（`~/.dsh/dsh-anywhere-hub/settings.json`）
 
 插件首次运行会自动生成纯净的通用配置，不包含任何个人敏感链接：
 
@@ -289,6 +309,19 @@ iOS 16.0–16.2、iOS 15 理论上被同一套垫片覆盖，但没有真机验�
 ---
 
 ## 🗒 更新日志
+
+### v1.2.5（2026-11-09）
+
+* **命名全量统一（老总令：必须都带 hub，不许一会带一会不带）**：原先部署路径是
+  `.dsh/profiles/desktop/node_modules/dsh-anywhere-hub` → `packages/dsh-anywhere`，一个插件两个名字。
+  现在包名 / 插件实例 id / 本地目录 / 状态目录 / RPC 通道 / 日志前缀 / 文档 / 探针路径全部统一为
+  **`dsh-anywhere-hub`**：目录改名 `packages/dsh-anywhere-hub`，`cordis.patch.yml` 的 `id` 跟着改，
+  profile 的 `package.json` / `pnpm-lock.yaml` 软链目标同步。
+* **零中断迁移**：首次启动把旧目录 `$DSH_HOME/dsh-anywhere/` 的 token / token-lan / session-key /
+  settings.json / tunnel-auto.json / bin 复制到新目录（旧目录**不删**），已登录手机不用重新扫码；
+  宿主同时挂载新通道 `/dsh-anywhere-hub` 与旧通道 `/dsh-anywhere`，客户端调用失败会自动回落旧通道，
+  因此「改了名但宿主还没重启」这段窗口里设置页照样能用。
+* 版本号 1.2.4 → 1.2.5。
 
 ### v1.2.4（2026-11-09）
 
@@ -312,7 +345,8 @@ iOS 16.0–16.2、iOS 15 理论上被同一套垫片覆盖，但没有真机验�
   它只覆盖第一个接入的 Web 上游，后面还要接更多 AI 平台、更多 Web 页面。`hub` 取「枢纽」意：
   插件本体（3083 多端同屏 + 改写层）与具体上游解耦，加平台不用改包名。
   仓库同步改为 `github.com/liushQAQ/dsh-anywhere-hub`（旧地址 301 自动跳转）。
-  **插件实例 id 仍为 `dsh-anywhere`**，配置键、数据目录、已登录设备全部沿用，升级不需重新扫码。
+  **插件实例 id 当时仍为 `dsh-anywhere`**（v1.2.5 起已统一为 `dsh-anywhere-hub`），
+  配置键、数据目录、已登录设备全部沿用，升级不需重新扫码。
 * **文档去 ZCode 化**：ZCode 章节标题改为「顺带把任意 Web 上游搬到手机上（首个接入：ZCode）」，
   并写明通用化做法（换上游只改 `runner.mjs` 源站与环境变量）。
 * **包元数据更新**：description / keywords / repository / homepage / bugs 全部跟随新名。

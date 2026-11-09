@@ -1,5 +1,11 @@
-// dsh-anywhere 设置页签 RPC 契约（client 与 host 共享）
-export const ANYWHERE_RPC_CHANNEL = '/dsh-anywhere';
+// dsh-anywhere-hub 设置页签 RPC 契约（client 与 host 共享）
+//
+// 命名唯一真源：包名 / 插件 id / 目录名 / RPC 通道 / 状态目录 一律 dsh-anywhere-hub。
+// 旧通道 '/dsh-anywhere' 只作为**过渡兼容**保留一份，host 同时挂载两条、client 调用失败
+// 时回落旧通道——这样「新 client + 老 host（未重启）」与「老 client + 新 host」都不会断。
+export const ANYWHERE_RPC_CHANNEL = '/dsh-anywhere-hub';
+export const ANYWHERE_RPC_CHANNEL_LEGACY = '/dsh-anywhere';
+export const ANYWHERE_RPC_CHANNELS = Object.freeze([ANYWHERE_RPC_CHANNEL, ANYWHERE_RPC_CHANNEL_LEGACY]);
 
 export const ANYWHERE_ENDPOINTS = Object.freeze({
   status: 'anywhere.status',

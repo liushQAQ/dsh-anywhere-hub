@@ -1,8 +1,9 @@
 # dsh-anywhere-hub bundle patch
-# id 固定 dsh-anywhere：改名不产生第二个实例（避免 3083 双绑 / 重复注册）
-# [2026-11-08 14:37 停用记录] 与 client.inject 双执行 = dsh-anywhere 工厂重复注册
+# id 与包名/目录名/状态目录统一为 dsh-anywhere-hub（曾用裸名 dsh-anywhere，已全量统一，
+# 加载器只按 id 认一个实例，不会产生第二个 → 不会 3083 双绑 / 重复注册）
+# [2026-11-08 14:37 停用记录] 与 client.inject 双执行 = 旧 dsh-anywhere 工厂重复注册
 # [2026-11-08 15:45 恢复] 重新启用 insert，让 host 侧 3083 服务重新监听；停用版另存
 #   cordis.patch.yml.bak_disabled_20261108_1545，若复现 client 重复注册回退该文件即可。
 - insert:
-    - id: dsh-anywhere
+    - id: dsh-anywhere-hub
       name: dsh-anywhere-hub

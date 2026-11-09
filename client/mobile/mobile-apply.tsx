@@ -33,7 +33,7 @@ export function mobileApply(ctx): void {
   const narrowMQ = window.matchMedia('(max-width: 1023px)');
   const stored = persistLayoutFromUrl(urlValue);
   const layout = resolveLayout({ urlValue, stored, narrowMatch: narrowMQ.matches });
-  document.body?.setAttribute('data-dsh-anywhere-layout', layout);
+  document.body?.setAttribute('data-dsh-anywhere-hub-layout', layout);
   if (layout === 'desktop') return;
   // 强制 mobile：narrow 永远 true；宽度变化不再切换（用户已显式选 mobile）
   // auto 模式：narrow 是真实的 matchMedia，宽度变化会触发 effect 挂载/卸载
@@ -289,7 +289,7 @@ export function mobileApply(ctx): void {
       } catch { /* 忽略，回退 process.cwd() */ }
       return ''
     }
-    // 手机侧读文件回调：走 dsh-anywhere 的 RPC 通道，由主机侧 fileRead 端点处理。
+    // 手机侧读文件回调：走 dsh-anywhere-hub 的 RPC 通道，由主机侧 fileRead 端点处理。
     const readFile = (filePath: string) =>
       ctx.connection.rpc.call(
         ANYWHERE_RPC_CHANNEL,
@@ -300,7 +300,7 @@ export function mobileApply(ctx): void {
   }, 'dsh-mobile-nav: file open guard + copy button + hide add-workspace (issue #17)')
 
   // 手机上模型 / 提供方设置加载失败：上游 dsh-web 会渲染「加载提供方目录失败 /
-  // Settings are unavailable in this browser」。这条文案不是 dsh-anywhere 的，但手机侧
+  // Settings are unavailable in this browser」。这条文案不是 dsh-anywhere-hub 的，但手机侧
   // 本就不支持改模型设置，原报错只会吓到用户。窄屏下用 MutationObserver 就地把该报错
   // 文本替换成「去电脑端修改」的引导提示（仅手机，桌面端不受影响）。
   ctx.effect(() => {

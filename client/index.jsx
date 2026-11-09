@@ -1,4 +1,4 @@
-// dsh-anywhere 网页客户端：
+// dsh-anywhere-hub 网页客户端：
 //   1. 设置页签「手机访问」（局域网/公网二维码 + 更新/重启提示）
 //   2. 移动端适配（移植自 MIT 项目 dsh-web-mobile，见 client/mobile/LICENSE.dsh-web-mobile）
 //
@@ -9,7 +9,7 @@
 
 import { createElement as h, useEffect, useRef, useState } from 'react';
 
-import { ANYWHERE_RPC_CHANNEL, ANYWHERE_ENDPOINTS, redactStatus, compareVersions } from './api.js';
+import { ANYWHERE_RPC_CHANNEL, ANYWHERE_RPC_CHANNEL_LEGACY, ANYWHERE_ENDPOINTS, redactStatus, compareVersions } from './api.js';
 import { mobileApply } from './mobile/mobile-apply.tsx';
 import { NS as ANYWHERE_NS, zh as ANYWHERE_ZH, en as ANYWHERE_EN } from './anywhere-locales.js';
 import { installKbGlide, installRevWatch } from './kbglide.js';
@@ -19,7 +19,7 @@ import { installKbGlide, installRevWatch } from './kbglide.js';
 installKbGlide();
 installRevWatch();
 
-const name = 'dsh-anywhere';
+const name = 'dsh-anywhere-hub';
 const inject = ['slots', 'connection', 'layout', 'locale', 'sessionLogDownload'];
 
 // 词典在 anywhere-locales.js；这里只做「取 key → 替换 {占位符} → 字符串」。
@@ -718,12 +718,19 @@ export function apply(ctx) {
   // 移动端适配（dsh-web-mobile 移植）：抽屉布局/触控/安全区，仅窄屏生效
   mobileApply(ctx);
 
+  // RPC 通道：dsh-anywhere-hub 为准；首次调用失败（宿主还是未重启的旧版本，只挂了旧通道）
+  // 时回落旧通道 /dsh-anywhere-hub 并记住，设置页照常可用，不必为了改名去重启宿主。
+  let rpcChannel = ANYWHERE_RPC_CHANNEL;
   const rpcCall = (endpoint, payload, signal) =>
-    ctx.connection.rpc.call(ANYWHERE_RPC_CHANNEL, endpoint, payload, signal);
+    ctx.connection.rpc.call(rpcChannel, endpoint, payload, signal).catch((err) => {
+      if (rpcChannel === ANYWHERE_RPC_CHANNEL_LEGACY) throw err;
+      rpcChannel = ANYWHERE_RPC_CHANNEL_LEGACY;
+      return ctx.connection.rpc.call(rpcChannel, endpoint, payload, signal);
+    });
 
   // 设置页签接入 DSH 本地化：注册 anywhere 词典（zh/en），并绑定一个随当前 locale 切换的 t()。
   const translate = ctx.locale.bind(ANYWHERE_NS);
-  ctx.effect(() => ctx.locale.register(ANYWHERE_NS, { zh: ANYWHERE_ZH, en: ANYWHERE_EN }), 'dsh-anywhere: anywhere locale dictionaries');
+  ctx.effect(() => ctx.locale.register(ANYWHERE_NS, { zh: ANYWHERE_ZH, en: ANYWHERE_EN }), 'dsh-anywhere-hub: anywhere locale dictionaries');
 
   // 设置一级入口（与 通用设置/模型/插件 同级，order 1 = 通用之后、最外层）
   ctx.slots.inject('settings.section', () =>

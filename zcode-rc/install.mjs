@@ -39,14 +39,14 @@ if (!target || target === resolve('.')) {
   process.exit(2);
 }
 
-/** proxy.mjs 的候选位置：安装包自带 > 同级 packages 分区 */
+/** proxy.mjs 的候选位置：安装包自带 > 同级 packages 分区（目录名唯一 dsh-anywhere-hub，旧名兜底） */
 const proxyCandidates = [
   join(HERE, 'lib', 'proxy.mjs'),
-  join(HERE, '..', 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'),
   join(HERE, '..', 'packages', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'),
+  join(HERE, '..', 'packages', 'dsh-anywhere', 'lib', 'proxy.mjs'),
   join(HERE, '..', 'node_modules', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'),
-  join(HERE, '..', 'dsh-anywhere', 'lib', 'proxy.mjs'),
-  join(HERE, '..', 'lib', 'proxy.mjs'),   // 从 dsh-anywhere 仓库的 zcode-rc/ 直接跑
+  join(HERE, '..', 'dsh-anywhere-hub', 'lib', 'proxy.mjs'),
+  join(HERE, '..', 'lib', 'proxy.mjs'),   // 从 dsh-anywhere-hub 仓库的 zcode-rc/ 直接跑
 ];
 
 const files = [
@@ -69,7 +69,7 @@ for (const f of files) {
 const proxySrc = proxyCandidates.find((p) => existsSync(p));
 if (!proxySrc) {
   console.error('✗ 找不到 lib/proxy.mjs。');
-  console.error('  请把 dsh-anywhere 的 lib/proxy.mjs 放到下面任一位置后重跑：');
+  console.error('  请把 dsh-anywhere-hub 的 lib/proxy.mjs 放到下面任一位置后重跑：');
   for (const p of proxyCandidates) console.error('    ' + p);
   process.exit(4);
 }
