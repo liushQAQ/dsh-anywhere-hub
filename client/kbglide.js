@@ -130,7 +130,51 @@ export function installKbGlide() {
     if (extra) setTimeout(check, 320);
   }
 
-  function onGeom() { burst(false); }
+  /* 键盘落定后的动态贴底校正（2026-11-10 老总令：不写死、检测再适配）：
+     实测 composerStack 视觉底到视口底的 gap，量多少清多少（只清 padding/margin，
+     不写死任何高度值）；不同机型键盘高度不同、官方样式再怎么改都自适应。
+     最多校两轮，全部基于当次测量。 */
+  function adjustKbGap() {
+    try {
+      if (!D.documentElement.classList.contains('zcrc-kb-open')) return;
+      var stack = D.querySelector('[class*="composerStack"]') || pick();
+      if (!stack) return;
+      var round = 0;
+      function pass() {
+        var s = D.querySelector('[class*="composerStack"]') || pick();
+        if (!s) return;
+        var r = s.getBoundingClientRect();
+        var gap = (W.innerHeight || 0) - r.bottom;
+        if (gap > 4) {
+          var cs = W.getComputedStyle(s);
+          if (parseFloat(cs.paddingBottom) > 0) s.style.paddingBottom = '0px';
+          else if (parseFloat(cs.marginBottom) > 0) s.style.marginBottom = '0px';
+          else if (s.parentElement && s.parentElement !== D.body) {
+            var pcs = W.getComputedStyle(s.parentElement);
+            if (parseFloat(pcs.paddingBottom) > 0) s.parentElement.style.paddingBottom = '0px';
+          }
+        }
+        if (++round < 3) setTimeout(pass, 120);
+      }
+      pass();
+    } catch (e) {}
+  }
+
+  function onGeom() {
+    /* 无协议路径（Safari/老 App）：按视口高度伸缩自行判键盘态 */
+    try {
+      var ih = W.innerHeight || 0;
+      if (!onGeom._ih) onGeom._ih = ih;
+      else {
+        if (ih < onGeom._ih * 0.8) {
+          D.documentElement.classList.add('zcrc-kb-open');
+          setTimeout(adjustKbGap, 420);
+        } else if (ih > onGeom._ih * 1.15) D.documentElement.classList.remove('zcrc-kb-open');
+        onGeom._ih = ih;
+      }
+    } catch (e) {}
+    burst(false);
+  }
 
   /* App 152：keyboardWillChangeFrame 里、动画开始之前调这个 */
   W.__zcrcKbWill = function (h, ms) {
@@ -139,6 +183,10 @@ export function installKbGlide() {
     var px = Math.max(0, parseFloat(h) || 0);
     var node = pick();
     hintMs = dur;
+    try {                                       /* 键盘态收纳（2026-11-10：底栏贴键盘顶，去掉空白） */
+      if (px > 8) D.documentElement.classList.add('zcrc-kb-open');
+      else D.documentElement.classList.remove('zcrc-kb-open');
+    } catch (e0) {}
     if (node) {
       var cur = tyOf(node);
       if (layoutTop === null) layoutTop = node.getBoundingClientRect().top - cur;
@@ -147,6 +195,7 @@ export function installKbGlide() {
         protoUntil = now() + dur + 260;
         moves++;
         setTy(node, -px, dur);
+        setTimeout(adjustKbGap, dur + 420);   /* 落定后实测贴底缺口，动态校正 */
         setTimeout(function () {          /* 保险：高度没跟着改就自己归位 */
           if (protoUntil && now() > protoUntil + 240 && el && Math.abs(tyOf(el)) > 6) {
             setTy(el, 0, 200);
@@ -232,4 +281,87 @@ export function installRevWatch() {
   }
   setTimeout(tick, 15000);
   setInterval(tick, 120000);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+ * composer 交互修补（installComposerFix，2026-11-10 老总令三连）
+ *   ① 点「发送/停止」后不再自动弹键盘：
+ *      App 层状态机有「点击点 80px 内有输入框也算要输入」的放行分支，发送按钮
+ *      紧挨输入框 → 点击它把放行窗口打开 → 发送后页面的 focusDraftEditor 在
+ *      1.5s 窗口内被放行 → 键盘弹。此处捕获发送按钮点击 → 主动 blur + 900ms
+ *      内拦截一切程序化聚焦（插件层 wrap 在 App 层之外，此处 return 即彻底拦死）；
+ *      用户真点输入框立即解除抑制，正常打字不受影响。
+ *   ② 键盘态底栏贴键盘顶：html.zcrc-kb-open 时收掉 composerStack 常驻的
+ *      32px 安全区 padding、「38轮/用量」pill 状态条与 root padding，卡片下移贴键盘；
+ *      收键盘自动还原。布局差由 kbglide 三拍滑块滑平，不生跳。
+ *   ③ 草稿限高：编辑器滚动容器封顶 34vh 内部滚动，草稿再多卡片不再无限撑高
+ *      （撑高到顶会把输入框顶出可点区，点上去像卡死）。
+ * ───────────────────────────────────────────────────────────────────── */
+export function installComposerFix() {
+  var W = typeof window !== 'undefined' ? window : null;
+  if (!W) return;
+  var D = W.document;
+  if (!D || W.__zcrcComposerFix) return;
+  W.__zcrcComposerFix = 'v1';
+
+  var suppressUntil = 0;
+  function now() {
+    try { return performance.now(); } catch (e) { return Date.now(); }
+  }
+  function isTextInput(el) {
+    try {
+      if (!el) return false;
+      if (el.isContentEditable || (el.getAttribute && el.getAttribute('contenteditable') === 'true')) return true;
+      var t = el.tagName;
+      if (t === 'TEXTAREA') return true;
+      if (t === 'INPUT') return !/^(button|submit|checkbox|radio|range|file)$/i.test(el.type || '');
+    } catch (e) {}
+    return false;
+  }
+
+  try {
+    var css = [
+      '/* dsh-anywhere-hub composer fix */',
+      '[class*="CHtLlW_scroll"]{max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}',
+      'html.zcrc-kb-open [class*="composerStack"]{padding-bottom:0!important;}',
+      'html.zcrc-kb-open [class*="CHtLlW_root"]{padding-bottom:0!important;}',
+      'html.zcrc-kb-open [class*="riMk1q_pill"]{display:none!important;}',
+      'html.zcrc-kb-open [class*="riMk1q_root"]{display:none!important;}'
+    ].join('');
+    var st = D.createElement('style');
+    st.id = 'zcrcComposerFix';
+    st.textContent = css;
+    (D.head || D.documentElement).appendChild(st);
+  } catch (e) {}
+
+  /* ① 发送/停止按钮点击 → 抑制窗口 */
+  try {
+    D.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      if (t.closest('[class*="CHtLlW_primary"]')) {
+        suppressUntil = now() + 900;
+        try { if (D.activeElement && D.activeElement.blur) D.activeElement.blur(); } catch (e2) {}
+      }
+    }, true);
+  } catch (e) {}
+
+  /* ② 用户真点输入框 → 立即解除抑制 */
+  try {
+    var release = function (e) {
+      var t = e.target;
+      if (t && isTextInput(t)) suppressUntil = 0;
+    };
+    D.addEventListener('touchstart', release, true);
+    D.addEventListener('mousedown', release, true);
+  } catch (e) {}
+
+  /* ③ wrap focus：抑制窗口内的程序化聚焦直接拦死 */
+  try {
+    var of = HTMLElement.prototype.focus;
+    HTMLElement.prototype.focus = function (o) {
+      if (now() < suppressUntil && isTextInput(this)) return;
+      return of.apply(this, arguments);
+    };
+  } catch (e) {}
 }

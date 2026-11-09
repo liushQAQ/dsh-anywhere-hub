@@ -195,7 +195,7 @@ function log(s) {
       // App 的缓存键是完整 URL，所以只要换一个从没被缓存过的 URL 就能破局。
       // /rc 每次访问都用当前配对 + 时间戳拼一个新地址 302 过去 → 天然 cache miss。
       // 页面本身（v15 起）已经 no-store + 资源带 ?v=，只要拿到一次新文档就永久新鲜。
-      // v20（2026-11-07）：短别名 /r、/d —— 手机上手打 192.168.215.218/r 比 :3090/rc 省一半字符。
+      // v20（2026-11-07）：短别名 /r、/d —— 手机上手打 局域网IP/r 比 :端口/rc 省一半字符。
       if (u && (u.pathname === '/r' || u.pathname === '/r/')) u.pathname = '/rc';
       if (u && (u.pathname === '/d' || u.pathname === '/d/')) u.pathname = '/diag';
       // v23（2026-11-07）：老地址自愈。
@@ -227,7 +227,7 @@ function log(s) {
         const q = new URLSearchParams({
           sid: pair.sid,
           mid: pair.mid || '',
-          name: pair.name || 'liuFWQ',
+          name: pair.name || 'iPhone',
           app_version: '3.17.2',
           _zcrc: String(Date.now()),
         });
@@ -256,7 +256,7 @@ function log(s) {
             const loc = '/diag?' + new URLSearchParams({
               sid: pair.sid,
               mid: pair.mid || '',
-              name: pair.name || 'liuFWQ',
+              name: pair.name || 'iPhone',
               app_version: '3.17.2',
               _zcrc: String(Date.now()),
             }).toString();
@@ -353,7 +353,7 @@ function log(s) {
 // 换端口 = 换源站，任何按源站建键的缓存/存储/离线副本一律失效。3091 与 3090 是同一份
 // 代码、同一套改写与垫片，只是 origin 不同；3083 完全不受影响。
 // v20（2026-11-07）：再加一条「无端口」源站 —— 80。
-// 手机上手打 192.168.215.218/r 即可，且 origin 变成 http://192.168.215.218（无 :3090），
+// 手机上手打 局域网IP/r 即可，且 origin 变成 http://局域网IP（无端口），
 // 任何按源站建键的 HTTP 缓存 / WKWebView 离线副本 / IndexedDB 一律全新，一次就干净。
 // 80 被占用时该条会 startup failed，其余端口照常工作（下面 try/catch 已保证）。
 const PORTS = [PORT, 3091, 80];

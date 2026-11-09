@@ -2601,7 +2601,45 @@ function installKbGlide() {
     setTimeout(check, 160);
     if (extra) setTimeout(check, 320);
   }
+  function adjustKbGap() {
+    try {
+      let pass = function() {
+        var s = D.querySelector('[class*="composerStack"]') || pick();
+        if (!s) return;
+        var r = s.getBoundingClientRect();
+        var gap = (W.innerHeight || 0) - r.bottom;
+        if (gap > 4) {
+          var cs = W.getComputedStyle(s);
+          if (parseFloat(cs.paddingBottom) > 0) s.style.paddingBottom = "0px";
+          else if (parseFloat(cs.marginBottom) > 0) s.style.marginBottom = "0px";
+          else if (s.parentElement && s.parentElement !== D.body) {
+            var pcs = W.getComputedStyle(s.parentElement);
+            if (parseFloat(pcs.paddingBottom) > 0) s.parentElement.style.paddingBottom = "0px";
+          }
+        }
+        if (++round < 3) setTimeout(pass, 120);
+      };
+      if (!D.documentElement.classList.contains("zcrc-kb-open")) return;
+      var stack = D.querySelector('[class*="composerStack"]') || pick();
+      if (!stack) return;
+      var round = 0;
+      pass();
+    } catch (e) {
+    }
+  }
   function onGeom() {
+    try {
+      var ih = W.innerHeight || 0;
+      if (!onGeom._ih) onGeom._ih = ih;
+      else {
+        if (ih < onGeom._ih * 0.8) {
+          D.documentElement.classList.add("zcrc-kb-open");
+          setTimeout(adjustKbGap, 420);
+        } else if (ih > onGeom._ih * 1.15) D.documentElement.classList.remove("zcrc-kb-open");
+        onGeom._ih = ih;
+      }
+    } catch (e) {
+    }
     burst(false);
   }
   W.__zcrcKbWill = function(h2, ms) {
@@ -2610,6 +2648,11 @@ function installKbGlide() {
     var px = Math.max(0, parseFloat(h2) || 0);
     var node = pick();
     hintMs = dur;
+    try {
+      if (px > 8) D.documentElement.classList.add("zcrc-kb-open");
+      else D.documentElement.classList.remove("zcrc-kb-open");
+    } catch (e0) {
+    }
     if (node) {
       var cur = tyOf(node);
       if (layoutTop === null) layoutTop = node.getBoundingClientRect().top - cur;
@@ -2617,6 +2660,7 @@ function installKbGlide() {
         protoUntil = now() + dur + 260;
         moves++;
         setTy(node, -px, dur);
+        setTimeout(adjustKbGap, dur + 420);
         setTimeout(function() {
           if (protoUntil && now() > protoUntil + 240 && el && Math.abs(tyOf(el)) > 6) {
             setTy(el, 0, 200);
@@ -2710,10 +2754,83 @@ function installRevWatch() {
   setTimeout(tick, 15e3);
   setInterval(tick, 12e4);
 }
+function installComposerFix() {
+  var W = typeof window !== "undefined" ? window : null;
+  if (!W) return;
+  var D = W.document;
+  if (!D || W.__zcrcComposerFix) return;
+  W.__zcrcComposerFix = "v1";
+  var suppressUntil = 0;
+  function now() {
+    try {
+      return performance.now();
+    } catch (e) {
+      return Date.now();
+    }
+  }
+  function isTextInput(el) {
+    try {
+      if (!el) return false;
+      if (el.isContentEditable || el.getAttribute && el.getAttribute("contenteditable") === "true") return true;
+      var t = el.tagName;
+      if (t === "TEXTAREA") return true;
+      if (t === "INPUT") return !/^(button|submit|checkbox|radio|range|file)$/i.test(el.type || "");
+    } catch (e) {
+    }
+    return false;
+  }
+  try {
+    var css = [
+      "/* dsh-anywhere-hub composer fix */",
+      '[class*="CHtLlW_scroll"]{max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}',
+      'html.zcrc-kb-open [class*="composerStack"]{padding-bottom:0!important;}',
+      'html.zcrc-kb-open [class*="CHtLlW_root"]{padding-bottom:0!important;}',
+      'html.zcrc-kb-open [class*="riMk1q_pill"]{display:none!important;}',
+      'html.zcrc-kb-open [class*="riMk1q_root"]{display:none!important;}'
+    ].join("");
+    var st = D.createElement("style");
+    st.id = "zcrcComposerFix";
+    st.textContent = css;
+    (D.head || D.documentElement).appendChild(st);
+  } catch (e) {
+  }
+  try {
+    D.addEventListener("click", function(e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      if (t.closest('[class*="CHtLlW_primary"]')) {
+        suppressUntil = now() + 900;
+        try {
+          if (D.activeElement && D.activeElement.blur) D.activeElement.blur();
+        } catch (e2) {
+        }
+      }
+    }, true);
+  } catch (e) {
+  }
+  try {
+    var release = function(e) {
+      var t = e.target;
+      if (t && isTextInput(t)) suppressUntil = 0;
+    };
+    D.addEventListener("touchstart", release, true);
+    D.addEventListener("mousedown", release, true);
+  } catch (e) {
+  }
+  try {
+    var of = HTMLElement.prototype.focus;
+    HTMLElement.prototype.focus = function(o) {
+      if (now() < suppressUntil && isTextInput(this)) return;
+      return of.apply(this, arguments);
+    };
+  } catch (e) {
+  }
+}
 
 // client/index.jsx
 installKbGlide();
 installRevWatch();
+installComposerFix();
 var name = "dsh-anywhere-hub";
 var inject = ["slots", "connection", "layout", "locale", "sessionLogDownload"];
 function fmt(t, key, vars) {
