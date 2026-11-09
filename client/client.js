@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: "dsh-anywhere",
+  id: "dsh-anywhere-hub",
   factory: (require) => {
     var module = { exports: {} };
     var exports = module.exports;
@@ -2461,7 +2461,250 @@ var en2 = {
   "feedback": "\u{1F64F} Questions? Open an issue on GitHub"
 };
 
+// client/kbglide.js
+function installKbGlide() {
+  var W = typeof window !== "undefined" ? window : null;
+  if (!W) return;
+  var D = W.document;
+  if (!D || W.__zcrcKbGlide) return;
+  var touch = false;
+  try {
+    touch = "ontouchstart" in W || (navigator.maxTouchPoints || 0) > 1;
+  } catch (e) {
+  }
+  if (!touch) {
+    W.__zcrcKbGlide = "skip-desktop";
+    return;
+  }
+  var reduce = false;
+  try {
+    reduce = !!(W.matchMedia && W.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  } catch (e) {
+  }
+  if (reduce) {
+    W.__zcrcKbGlide = "skip-reduced-motion";
+    return;
+  }
+  var el = null;
+  var layoutTop = null;
+  var lastAt = 0;
+  var hintMs = 0;
+  var pins = 0;
+  var moves = 0;
+  var protoUntil = 0;
+  var closeMs = 0;
+  var closeUntil = 0;
+  function now() {
+    try {
+      return performance.now();
+    } catch (e) {
+      return Date.now();
+    }
+  }
+  function pick() {
+    if (el && el.isConnected) return el;
+    el = null;
+    var found = null;
+    try {
+      found = D.querySelector('[class*="composerStack"]');
+    } catch (e) {
+    }
+    if (!found) {
+      try {
+        var list = D.querySelectorAll('textarea,[contenteditable="true"]');
+        var vh = W.innerHeight || 0;
+        for (var i = 0; i < list.length; i++) {
+          var r = list[i].getBoundingClientRect();
+          if (r.width < 160 || r.height < 16 || r.top < vh * 0.45) continue;
+          found = list[i];
+          break;
+        }
+      } catch (e) {
+      }
+    }
+    el = found || null;
+    return el;
+  }
+  function tyOf(node) {
+    try {
+      var t = W.getComputedStyle(node).transform;
+      if (!t || t === "none") return 0;
+      var m = /matrix(3d)?\(([^)]+)\)/.exec(t);
+      if (!m) return 0;
+      var p = m[2].split(",");
+      return parseFloat(m[1] ? p[13] : p[5]) || 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  function setTy(node, v, ms) {
+    try {
+      node.style.transition = ms > 0 ? "transform " + ms + "ms cubic-bezier(.25,.1,.25,1)" : "none";
+      node.style.transform = Math.abs(v) < 0.5 ? "" : "translate3d(0," + Math.round(v * 10) / 10 + "px,0)";
+    } catch (e) {
+    }
+  }
+  function raf(fn) {
+    try {
+      if (W.requestAnimationFrame) {
+        W.requestAnimationFrame(fn);
+        return;
+      }
+    } catch (e) {
+    }
+    setTimeout(fn, 16);
+  }
+  function check() {
+    var node = pick();
+    if (!node) return;
+    var t = now();
+    var cur = tyOf(node);
+    var layout = node.getBoundingClientRect().top - cur;
+    if (layoutTop === null) {
+      layoutTop = layout;
+      lastAt = t;
+      return;
+    }
+    var d = layout - layoutTop;
+    var visual = layoutTop + cur;
+    if (Math.abs(d) < 6) {
+      lastAt = t;
+      return;
+    }
+    layoutTop = layout;
+    lastAt = t;
+    var ms;
+    if (protoUntil && t < protoUntil + 260) ms = Math.max(80, Math.min(hintMs || 250, protoUntil - t));
+    else if (closeMs && t < closeUntil) ms = Math.max(80, Math.min(closeMs, closeUntil - t));
+    else ms = hintMs || 240;
+    closeMs = 0;
+    setTy(node, visual - layout, 0);
+    try {
+      void node.offsetHeight;
+    } catch (e) {
+    }
+    setTy(node, 0, ms);
+    pins++;
+  }
+  function burst(extra) {
+    raf(check);
+    setTimeout(check, 60);
+    setTimeout(check, 160);
+    if (extra) setTimeout(check, 320);
+  }
+  function onGeom() {
+    burst(false);
+  }
+  W.__zcrcKbWill = function(h2, ms) {
+    var v = parseFloat(ms);
+    var dur = v > 80 && v < 600 ? v : 250;
+    var px = Math.max(0, parseFloat(h2) || 0);
+    var node = pick();
+    hintMs = dur;
+    if (node) {
+      var cur = tyOf(node);
+      if (layoutTop === null) layoutTop = node.getBoundingClientRect().top - cur;
+      if (px > 8) {
+        protoUntil = now() + dur + 260;
+        moves++;
+        setTy(node, -px, dur);
+        setTimeout(function() {
+          if (protoUntil && now() > protoUntil + 240 && el && Math.abs(tyOf(el)) > 6) {
+            setTy(el, 0, 200);
+            protoUntil = 0;
+          }
+        }, dur + 520);
+      } else {
+        closeMs = dur;
+        closeUntil = now() + dur + 300;
+      }
+    }
+    burst(true);
+  };
+  W.__zcrcKbHold = function() {
+  };
+  function reset() {
+    layoutTop = null;
+    closeMs = 0;
+    protoUntil = 0;
+    if (el && el.isConnected) setTy(el, 0, 0);
+  }
+  W.__zcrcKbGlide = "dsh-v5";
+  W.__zcrcKbPins = function() {
+    return pins;
+  };
+  W.__zcrcKbMoves = function() {
+    return moves;
+  };
+  try {
+    W.addEventListener("resize", onGeom);
+    if (W.visualViewport) W.visualViewport.addEventListener("resize", onGeom);
+    W.addEventListener("orientationchange", function() {
+      setTimeout(reset, 400);
+    });
+    D.addEventListener("focusin", function() {
+      if (!hintMs) hintMs = 250;
+    }, true);
+  } catch (e) {
+  }
+}
+function installRevWatch() {
+  var W = typeof window !== "undefined" ? window : null;
+  if (!W) return;
+  var D = W.document;
+  if (!D || W.__zcrcRevWatch) return;
+  W.__zcrcRevWatch = "v1";
+  var ownRev = "";
+  try {
+    var html = D.documentElement ? D.documentElement.innerHTML : "";
+    var m = /dsh-anywhere-hub\/client\.js&(?:amp;)?rev=([0-9a-f]+)/.exec(html);
+    if (m) ownRev = m[1];
+  } catch (e) {
+  }
+  if (!ownRev) return;
+  var KEY = "dsh-anywhere-rev-reloaded";
+  var lastAct = 0;
+  function mark() {
+    try {
+      lastAct = performance.now();
+    } catch (e) {
+      lastAct = Date.now();
+    }
+  }
+  ["pointerdown", "keydown", "touchstart", "scroll"].forEach(function(n) {
+    D.addEventListener(n, mark, { passive: true, capture: true });
+  });
+  function tick() {
+    try {
+      if (D.visibilityState !== "visible") return;
+      var t = performance.now();
+      if (lastAct && t - lastAct < 2e4) return;
+      var a = D.activeElement;
+      if (a && /^(INPUT|TEXTAREA)$/.test(a.tagName)) return;
+      if (a && a.isContentEditable) return;
+      fetch("/", { cache: "no-store" }).then(function(r) {
+        return r.text();
+      }).then(function(h2) {
+        var m2 = /dsh-anywhere-hub\/client\.js&(?:amp;)?rev=([0-9a-f]+)/.exec(h2);
+        if (!m2 || m2[1] === ownRev) return;
+        try {
+          if (sessionStorage.getItem(KEY) === m2[1]) return;
+          sessionStorage.setItem(KEY, m2[1]);
+        } catch (e) {
+        }
+        W.location.reload();
+      }).catch(function() {
+      });
+    } catch (e) {
+    }
+  }
+  setTimeout(tick, 15e3);
+  setInterval(tick, 12e4);
+}
+
 // client/index.jsx
+installKbGlide();
+installRevWatch();
 var name = "dsh-anywhere";
 var inject = ["slots", "connection", "layout", "locale", "sessionLogDownload"];
 function fmt(t, key, vars) {

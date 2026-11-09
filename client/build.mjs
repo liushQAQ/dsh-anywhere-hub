@@ -38,7 +38,10 @@ try {
 }
 const { build } = esbuild;
 const outputPath = resolve(packageRoot, 'client/client.js');
-const loaderId = process.env.DSH_ANYWHERE_CLIENT_ID ?? 'dsh-anywhere';
+// 模块 id 必须等于 DSH 侧加载用的包名（dsh-anywhere-hub），否则脚本执行完
+// 不会被认成该插件 → 页面报 loaded without registering "dsh-anywhere-hub"。
+const pkgName = JSON.parse(await (await import('node:fs/promises')).readFile(resolve(packageRoot, 'package.json'), 'utf8')).name;
+const loaderId = process.env.DSH_ANYWHERE_CLIENT_ID ?? pkgName;
 
 const result = await build({
   entryPoints: [resolve(sourceDir, 'index.jsx')],
