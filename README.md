@@ -310,6 +310,16 @@ iOS 16.0–16.2、iOS 15 理论上被同一套垫片覆盖，但没有真机验�
 
 ## 🗒 更新日志
 
+### v1.2.9（2026-11-11）
+
+* **ZCode 网关 `/dl/*` 分发通道 502 根修（lib/proxy.mjs）**：2.2.2(157) 发版三验发现
+  网关 `/dl/latest.json`、`/dl/*.tipa` 全 502（upstream 占位 59999 拒连）。根因：
+  `zcodeOwnPaths` 劫持清单从来没有 `/dl` 前缀，而 `allowedPaths` 闸外的路径漏到
+  upstream；11-09 的 2.2.1 三验通过只是当时网关进程还载着更早的内存版。
+  修复：`zcodeOwnPaths` 增加 `allowedPaths && /dl/` 条件项 —— 只在独立 ZCode
+  网关实例（3090，带 allowedPaths）把 `/dl/*` 交给实例钩子分发（runner.mjs
+  代理 dshstat 9071，Range/HEAD/条件请求透传）；3083 主实例不认该前缀，行为零变化。
+
 ### v1.2.8（2026-11-10）
 
 * **会话框「待发送排队后点输入框弹不出键盘」修复（client/kbglide.js）**：
