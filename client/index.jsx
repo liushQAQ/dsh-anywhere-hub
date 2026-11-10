@@ -13,12 +13,16 @@ import { ANYWHERE_RPC_CHANNEL, ANYWHERE_RPC_CHANNEL_LEGACY, ANYWHERE_ENDPOINTS, 
 import { mobileApply } from './mobile/mobile-apply.tsx';
 import { NS as ANYWHERE_NS, zh as ANYWHERE_ZH, en as ANYWHERE_EN } from './anywhere-locales.js';
 import { installKbGlide, installRevWatch, installComposerFix } from './kbglide.js';
+import { installSessionNet } from './sessionnet.js';
 
 // 键盘跟手（会话框上移/回收动画）+ 页面按 client.js rev 自更新 + composer 交互修补。
 // 放在模块顶层：本插件客户端一被加载就装上，不依赖任何页面组件是否渲染。
 installKbGlide();
 installRevWatch();
 installComposerFix();
+// 会话切换网络调度：重接口（mnemon/turn-activities/agent-teams/dsh-purge）去重+限并发+微缓存，
+// 治「快速连续切会话第二轮群卡 12~30s」（2026-11-10 实测，详见 sessionnet.js 头注）。
+installSessionNet();
 
 const name = 'dsh-anywhere-hub';
 const inject = ['slots', 'connection', 'layout', 'locale', 'sessionLogDownload'];

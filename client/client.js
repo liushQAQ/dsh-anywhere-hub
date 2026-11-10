@@ -28,7 +28,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// index.jsx
+// client/index.jsx
 var index_exports = {};
 __export(index_exports, {
   apply: () => apply,
@@ -39,7 +39,7 @@ __export(index_exports, {
 module.exports = __toCommonJS(index_exports);
 var import_react2 = require("react");
 
-// api.js
+// client/api.js
 var ANYWHERE_RPC_CHANNEL = "/dsh-anywhere-hub";
 var ANYWHERE_RPC_CHANNEL_LEGACY = "/dsh-anywhere";
 var ANYWHERE_RPC_CHANNELS = Object.freeze([ANYWHERE_RPC_CHANNEL, ANYWHERE_RPC_CHANNEL_LEGACY]);
@@ -107,7 +107,7 @@ function redactStatus(s) {
   };
 }
 
-// mobile/MobileNavToggle.tsx
+// client/mobile/MobileNavToggle.tsx
 var import_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
 function MobileNavToggle({ toggleSidebar, t }) {
   const toggleExplorer = () => {
@@ -142,11 +142,11 @@ function MobileNavToggle({ toggleSidebar, t }) {
   ));
 }
 
-// mobile/MobileNavOverlay.tsx
+// client/mobile/MobileNavOverlay.tsx
 var import_react = require("react");
 var import_dsh_client_ui_primitives2 = require("@deepseek-ai/dsh-client-ui-primitives");
 
-// mobile/nav-targets.mjs
+// client/mobile/nav-targets.mjs
 var DRAWER_SELECTOR = '[data-mobile-nav="frame"] > :first-child';
 var TOGGLE_SELECTOR = '[data-mobile-nav="toggle"]';
 var NAV_TARGETS = [
@@ -179,7 +179,7 @@ function isOverlayTap(target) {
   return target.closest(OVERLAY_SELECTOR) !== null;
 }
 
-// mobile/MobileNavOverlay.tsx
+// client/mobile/MobileNavOverlay.tsx
 var MOBILE_QUERY = "(max-width: 1023px)";
 function useMobile() {
   const [mobile, setMobile] = (0, import_react.useState)(() => window.matchMedia(MOBILE_QUERY).matches);
@@ -368,7 +368,7 @@ function MobileNavOverlay({ toggleSidebar, t }) {
   ));
 }
 
-// mobile/MobileDrawerFooter.tsx
+// client/mobile/MobileDrawerFooter.tsx
 var import_dsh_client_ui_primitives3 = require("@deepseek-ai/dsh-client-ui-primitives");
 function MobileDrawerFooter({ useSessions, downloadSessionLog, toggleSidebar, t }) {
   const sessionId = useSessions((state) => state.current);
@@ -404,7 +404,7 @@ function MobileDrawerFooter({ useSessions, downloadSessionLog, toggleSidebar, t 
   ));
 }
 
-// mobile/fileGuard.ts
+// client/mobile/fileGuard.ts
 var GUARD_MSG = "\u624B\u673A\u4E0A\u65E0\u6CD5\u76F4\u63A5\u6253\u5F00\u7535\u8111\u4E0A\u7684\u6587\u4EF6";
 var WS_LABELS = ["\u6DFB\u52A0\u5DE5\u4F5C\u533A", "\u6DFB\u52A0\u5DE5\u4F5C\u533A\u2026", "Add workspace", "Add workspace\u2026"];
 var COPY_LABEL = "\u590D\u5236";
@@ -567,7 +567,7 @@ function startFileGuard(readFile) {
   };
 }
 
-// mobile/mobile.css.ts
+// client/mobile/mobile.css.ts
 var MOBILE_CSS = `
 /* ---------- base control styles (rendered at any width, hidden where unused) ---------- */
 
@@ -1958,7 +1958,7 @@ var MOBILE_CSS = `
 
 `;
 
-// mobile/locales.ts
+// client/mobile/locales.ts
 var NS = "mobileNav";
 var zh = {
   "open": "\u6253\u5F00\u76EE\u5F55",
@@ -1975,7 +1975,7 @@ var en = {
   "files": "Files"
 };
 
-// mobile/layout-mode.mjs
+// client/mobile/layout-mode.mjs
 var LAYOUT_KEY = "dsh-anywhere-hub.layout";
 var LAYOUT_KEY_LEGACY = "dsh-anywhere.layout";
 function resolveLayout({ urlValue, stored, narrowMatch }) {
@@ -2006,7 +2006,7 @@ function persistLayoutFromUrl(urlValue) {
   }
 }
 
-// mobile/mobile-apply.tsx
+// client/mobile/mobile-apply.tsx
 function mobileApply(ctx) {
   const urlValue = new URL(window.location.href).searchParams.get("dsh-layout") ?? "";
   const narrowMQ = window.matchMedia("(max-width: 1023px)");
@@ -2259,7 +2259,7 @@ function mobileApply(ctx) {
   }, MobileDrawerFooter));
 }
 
-// anywhere-locales.js
+// client/anywhere-locales.js
 var NS2 = "anywhere";
 var zh2 = {
   "section": "\u624B\u673A\u8BBF\u95EE",
@@ -2470,7 +2470,7 @@ var en2 = {
   "feedback": "\u{1F64F} Questions? Open an issue on GitHub"
 };
 
-// kbglide.js
+// client/kbglide.js
 function installKbGlide() {
   var W = typeof window !== "undefined" ? window : null;
   if (!W) return;
@@ -2887,10 +2887,135 @@ function installComposerFix() {
   }
 }
 
-// index.jsx
+// client/sessionnet.js
+function installSessionNet() {
+  try {
+    let cacheGet = function(url) {
+      var e = cache.get(url);
+      if (!e) return null;
+      if (Date.now() - e.at > CACHE_TTL_MS) {
+        cache.delete(url);
+        return null;
+      }
+      return e.res;
+    }, cachePut = function(url, res) {
+      try {
+        cache.set(url, { at: Date.now(), res });
+      } catch (e) {
+      }
+      if (cache.size > CACHE_MAX) {
+        var oldest = cache.keys().next().value;
+        cache.delete(oldest);
+      }
+    }, pump = function() {
+      if (active >= MAX_CONCURRENT || !queue.length) return;
+      var next = queue.shift();
+      stats.queued = queue.length;
+      active++;
+      stats.live = active;
+      next();
+    }, runLimited = function(url, init) {
+      return new Promise(function(resolve, reject) {
+        var started = false;
+        function start() {
+          started = true;
+          origFetch(url, init).then(function(res) {
+            active--;
+            stats.live = active;
+            stats.done++;
+            resolve(res);
+            pump();
+          }, function(err) {
+            active--;
+            stats.live = active;
+            reject(err);
+            pump();
+          });
+        }
+        if (active < MAX_CONCURRENT) {
+          active++;
+          stats.live = active;
+          start();
+        } else {
+          stats.queued = queue.length + 1;
+          queue.push(start);
+        }
+        var sig = init && init.signal;
+        if (sig) {
+          var onAbort = function() {
+            if (started) return;
+            var i = queue.indexOf(start);
+            if (i >= 0) {
+              queue.splice(i, 1);
+              stats.queued = queue.length;
+            }
+            reject(new DOMException("Aborted", "AbortError"));
+          };
+          if (sig.aborted) onAbort();
+          else sig.addEventListener("abort", onAbort, { once: true });
+        }
+      });
+    };
+    if (typeof window === "undefined" || !window.fetch) return;
+    var W = window;
+    if (W.__zcrcSnetInstalled) return;
+    W.__zcrcSnetInstalled = true;
+    var origFetch = W.fetch;
+    var HEAVY_RE = /mnemon|turn-activities|agent-teams|dsh-purge/;
+    var MAX_CONCURRENT = 3;
+    var CACHE_TTL_MS = 800;
+    var CACHE_MAX = 30;
+    var stats = { live: 0, queued: 0, dedup: 0, hit: 0, done: 0 };
+    var active = 0;
+    var queue = [];
+    var inflight = /* @__PURE__ */ new Map();
+    var cache = /* @__PURE__ */ new Map();
+    W.fetch = function(input, init) {
+      try {
+        var url = typeof input === "string" ? input : input && input.url || "";
+        var method = (init && init.method || input && input.method || "GET").toUpperCase();
+        if (method !== "GET" || !HEAVY_RE.test(url)) return origFetch.apply(null, arguments);
+        var cached = cacheGet(url);
+        if (cached) {
+          stats.hit++;
+          return Promise.resolve(cached.clone());
+        }
+        var shared = inflight.get(url);
+        if (shared) {
+          stats.dedup++;
+          return shared.then(function(r) {
+            return r.clone();
+          });
+        }
+        var p = runLimited(url, init || void 0);
+        inflight.set(url, p);
+        var tracked = p.then(function(res) {
+          inflight.delete(url);
+          if (res.ok) cachePut(url, res);
+          return res;
+        }, function(err) {
+          inflight.delete(url);
+          throw err;
+        });
+        return tracked.then(function(r) {
+          return r.clone();
+        });
+      } catch (e) {
+        return origFetch.apply(null, arguments);
+      }
+    };
+    W.__zcrcSnetStats = function() {
+      return JSON.parse(JSON.stringify(stats));
+    };
+  } catch (e) {
+  }
+}
+
+// client/index.jsx
 installKbGlide();
 installRevWatch();
 installComposerFix();
+installSessionNet();
 var name = "dsh-anywhere-hub";
 var inject = ["slots", "connection", "layout", "locale", "sessionLogDownload"];
 function fmt(t, key, vars) {
